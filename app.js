@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 const globalErrorHandler = require("./controller/error");
 const AppError = require("./utils/appError");
 const productRoute = require("./routes/productRoute");
+const waitlistRoute = require("./routes/waitlistRoute");
 
 const app = express();
 
@@ -21,8 +22,8 @@ app.use(cookieParser());
 //Routes
 // app.use("/", (req, res, next) => res.send("Welcome to foods my momi api"));
 app.use("/api/v1/product", productRoute);
+app.use("/api/v1/wait-list", waitlistRoute);
 // app.use("/api/v1/users", userRouter);
-// app.use("/api/v1/interviews", interviewRouter);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

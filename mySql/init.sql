@@ -1,14 +1,14 @@
-DROP TABLE IF EXISTS waitlist;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS products;
-DROP TABLE IF EXISTS cart;
+DROP TABLE IF EXISTS carts;
 DROP TABLE IF EXISTS favorites;
-DROP TABLE IF EXISTS advert_message;
-DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS advert_messages;
 DROP TABLE IF EXISTS order_items;
 DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS waitlists;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS products;
 
-CREATE TABLE waitlist (
+CREATE TABLE waitlists (
 	id INT AUTO_INCREMENT PRIMARY KEY, 
     name VARCHAR(255) NOT NULL,
     phone VARCHAR(255) NOT NULL,
@@ -40,17 +40,17 @@ CREATE TABLE products (
     priceNgn DECIMAL(10, 2) NOT NULL, /*Can take decimals of two places, e.g 15000.99 or 9.99*/
     priceUs DECIMAL(10, 2) NOT NULL, 
     priceUk DECIMAL(10, 2) NOT NULL, 
-    priceGh DECIMAL(10, 2) NOT NULL, 
+    priceGhana DECIMAL(10, 2) NOT NULL, 
     priceCanada DECIMAL(10, 2) NOT NULL, 
     categories VARCHAR(255) NOT NULL,
     image VARCHAR(255) NOT NULL,
     featured ENUM("true", "false") NOT NULL DEFAULT "false",
     collectionTitle VARCHAR(255) NOT NULL,
-    collectionDescription VARCHAR(255) NOT NULL,
+    collectionDescription VARCHAR(512) NOT NULL,
 	created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE cart (
+CREATE TABLE carts (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     product_id INT NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE favorites (
     FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
 );
 
-CREATE TABLE advert_message (
+CREATE TABLE advert_messages (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     text VARCHAR(255) NOT NULL,
     image VARCHAR(255),

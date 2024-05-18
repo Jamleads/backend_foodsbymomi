@@ -31,8 +31,9 @@ const formatReqBody = (body, table) => {
 
   // remove created_at field if present
   delete body.created_at;
-  // stringyfy id
-  body.id = String(body.id);
+
+  // remove id field if present
+  delete body.id;
 
   // trim fields
   for (const [key, value] of Object.entries(body)) {
