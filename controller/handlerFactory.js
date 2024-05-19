@@ -58,8 +58,7 @@ const sendResponse = (res, table, response, statusCode) => {
 exports.getAll = (table, filteredColumns) => {
   return catchAsync(async (req, res, next) => {
     const columns = filteredColumns ? filteredColumns : "*";
-    const forUsers = `SELECT ${columns} FROM ${table} WHERE active <> 'false'`;
-    const sql = table === "users" ? forUsers : `SELECT ${columns} FROM ${table}`;
+    const sql = `SELECT ${columns} FROM ${table}`;
 
     let result;
 
@@ -109,9 +108,7 @@ exports.deleteOne = (table) => {
 exports.getOne = (table, filteredColumns) => {
   return catchAsync(async (req, res, next) => {
     const columns = filteredColumns ? filteredColumns : "*";
-    const forUsers = `SELECT ${columns} FROM ${table} WHERE active <> 'false' AND id = ?`;
-    const sql =
-      table === "users" ? forUsers : `SELECT ${columns} FROM ${table} WHERE id = ?`;
+    const sql = `SELECT ${columns} FROM ${table} WHERE id = ?`;
     const id = req.params.id;
 
     // Check if id is a number

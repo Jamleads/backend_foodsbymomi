@@ -7,6 +7,8 @@ const AppError = require("./utils/appError");
 const productRoute = require("./routes/productRoute");
 const waitlistRoute = require("./routes/waitlistRoute");
 const advertMessageRoute = require("./routes/advertMessageRoute");
+const authRoute = require("./routes/authRoute");
+const userRoute = require("./routes/userRoute");
 
 const app = express();
 
@@ -25,7 +27,8 @@ app.use(cookieParser());
 app.use("/api/v1/product", productRoute);
 app.use("/api/v1/wait-list", waitlistRoute);
 app.use("/api/v1/advert-message", advertMessageRoute);
-// app.use("/api/v1/users", userRouter);
+app.use("/api/v1/auth", authRoute);
+app.use("/api/v1/user", userRoute);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
