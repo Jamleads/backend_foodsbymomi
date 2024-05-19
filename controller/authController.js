@@ -6,6 +6,7 @@ const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const validator = require("validator");
 const { promisify } = require("util");
+const Email = require("../utils/email");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -114,9 +115,8 @@ exports.signUp = catchAsync(async (req, res, next) => {
     )
   )[0][0];
 
-  //   const url = `${req.protocol}://${req.get("host")}/me`;
-  //TODO
-  //   await new Email(newUser, url).sendWelcome();
+  // send email
+  await new Email(newUser).sendWelcome();
 
   //   create and send Token
   createSendToken(newUser, 201, res, req);
@@ -287,11 +287,10 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   // TODO
   // Send token to user's email
-  //   const resetURL = `${req.protocol}://${req.get("host")}/reset-password/${resetToken}`;
+  const resetURL = `${process.env.FRONTEND_URL}}/reset-password/${resetToken}`;
 
   try {
-    // TODO
-    // await new Email(user, resetURL).sendPasswordReset();
+    await new Email(user, resetURL).sendPasswordReset();
 
     res.status(200).json({
       status: "success",
