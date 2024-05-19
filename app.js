@@ -6,6 +6,7 @@ const globalErrorHandler = require("./controller/error");
 const AppError = require("./utils/appError");
 const productRoute = require("./routes/productRoute");
 const waitlistRoute = require("./routes/waitlistRoute");
+const advertMessageRoute = require("./routes/advertMessageRoute");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(cookieParser());
 // app.use("/", (req, res, next) => res.send("Welcome to foods my momi api"));
 app.use("/api/v1/product", productRoute);
 app.use("/api/v1/wait-list", waitlistRoute);
+app.use("/api/v1/advert-message", advertMessageRoute);
 // app.use("/api/v1/users", userRouter);
 
 app.all("*", (req, res, next) => {
