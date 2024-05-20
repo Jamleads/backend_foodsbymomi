@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS cart_items;
 DROP TABLE IF EXISTS carts;
 DROP TABLE IF EXISTS favorites;
 DROP TABLE IF EXISTS advert_messages;
@@ -38,12 +39,17 @@ CREATE TABLE users (
 CREATE TABLE products (
 	id INT AUTO_INCREMENT PRIMARY KEY, 
     title VARCHAR(255) NOT NULL,
-    priceNgn DECIMAL(10, 2) NOT NULL, /*Can take decimals of two places, e.g 15000.99 or 9.99*/
+    priceNgn DECIMAL(10, 2) NOT NULL,
     priceUs DECIMAL(10, 2) NOT NULL, 
     priceUk DECIMAL(10, 2) NOT NULL, 
     priceGhana DECIMAL(10, 2) NOT NULL, 
     priceCanada DECIMAL(10, 2) NOT NULL, 
-    categories VARCHAR(255) NOT NULL,
+    nigeriaCode VARCHAR(8) NOT NULL DEFAULT 'NGN',
+    ghanaCode VARCHAR(8) NOT NULL DEFAULT 'GHS',
+    ukCode VARCHAR(8) NOT NULL DEFAULT 'GBP',
+    usCode VARCHAR(8) NOT NULL DEFAULT 'USD',
+    canadaCode VARCHAR(8) NOT NULL DEFAULT 'CAD',
+    categories VARCHAR(512) NOT NULL,
     image VARCHAR(255) NOT NULL,
     featured ENUM("true", "false") NOT NULL DEFAULT "false",
     collectionTitle VARCHAR(255) NOT NULL,
@@ -54,11 +60,18 @@ CREATE TABLE products (
 CREATE TABLE carts (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    product_id INT NOT NULL,
-    quantity INT NOT NULL,
 	created_at TIMESTAMP DEFAULT NOW(),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE TABLE cart_items (
+id INT AUTO_INCREMENT PRIMARY KEY,
+cart_id INT NOT NULL,
+product_id INT NULL,
+quantity INT DEFAULT 1,
+created_at TIMESTAMP DEFAULT NOW(),
+FOREIGN KEY (cart_id) REFERENCES carts (id) ON DELETE CASCADE,
+FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
 );
 
 CREATE TABLE favorites (
