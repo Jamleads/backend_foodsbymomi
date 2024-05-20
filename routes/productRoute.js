@@ -5,11 +5,13 @@ const {
   getOneProduct,
   deleteProduct,
   updateProduct,
+  getFeaturedProducts,
 } = require("../controller/productController");
 
-const router = express.Router({ mergeParams: true });
+const router = express.Router();
 
 router.route("/").get(getAllProduct);
+router.route("/featured-products").get(getFeaturedProducts);
 
 router.route("/create").post(createProduct);
 

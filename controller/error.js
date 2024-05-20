@@ -22,6 +22,14 @@ const handleDuplicateEntryDB = (err) => {
   }
 };
 
+const handleNoDefaultValue = (err) => {
+  let field = err.sqlMessage.split(" ")[1];
+
+  console.log(field);
+
+  return new AppError(`The ${field} field can not be empty!`, 400);
+};
+
 const sendErrorDev = (err, req, res) => {
   return res.status(err.statusCode).json({
     status: err.status,
@@ -55,6 +63,8 @@ module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
 
+  console.log(err);
+
   if (process.env.NODE_ENV === "development") {
     sendErrorDev(err, req, res);
   } else if (process.env.NODE_ENV === "production") {
@@ -66,6 +76,8 @@ module.exports = (err, req, res, next) => {
     if (error.code === "ER_BAD_NULL_ERROR") error = handleRequiredFieldErrorDB(error);
 
     if (error.code === "ER_DUP_ENTRY") error = handleDuplicateEntryDB(error);
+
+    if (error.code === "ER_NO_DEFAULT_FOR_FIELD") error = handleNoDefaultValue(error);
 
     sendErrorProd(error, req, res);
   }

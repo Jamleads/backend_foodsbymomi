@@ -22,6 +22,7 @@ CREATE TABLE users (
 	id INT AUTO_INCREMENT PRIMARY KEY,  
     name VARCHAR(255) NOT NULL, 
     email VARCHAR(255) UNIQUE, 
+    phone VARCHAR(255),
     password VARCHAR(255) NOT NULL, 
     role ENUM ('admin', 'customer') NOT NULL DEFAULT 'customer', 
     active ENUM ('true', 'false') NOT NULL DEFAULT 'true',
@@ -71,7 +72,7 @@ CREATE TABLE favorites (
 
 CREATE TABLE advert_messages (
 	id INT AUTO_INCREMENT PRIMARY KEY,
-    text VARCHAR(255) NOT NULL,
+    text VARCHAR(512) NOT NULL,
     image VARCHAR(255),
     backgroundImage VARCHAR(255)
 );

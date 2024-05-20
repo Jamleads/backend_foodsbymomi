@@ -10,18 +10,20 @@ module.exports = class Email {
 
   newTransport() {
     //  TODO
-    // if (process.env.NODE_ENV !== "development") {
-    //   return nodemailer.createTransport({
-    //     host: ,
-    //     port: ,
-    //     auth: {
-    //       user: ,
-    //       pass: ,
-    //     },
-    //   });
-    // }
+    if (process.env.NODE_ENV !== "development") {
+      // return nodemailer.createTransport({
+      //   pool: true,
+      //   host: process.env.EMAIL_HOST,
+      //   port: process.env.EMAIL_PORT,
+      //   auth: {
+      //     user: process.env.EMAIL_USER,
+      //     pass: process.env.EMAIL_PASSWORD,
+      //   },
+      // });
+    }
 
     return nodemailer.createTransport({
+      pool: true,
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT,
       auth: {
@@ -32,11 +34,12 @@ module.exports = class Email {
   }
 
   // send actual email
-  async send(template, subject) {
+  async send(template, subject, message) {
     // render html based on a pug template
     const html = pug.renderFile(`${__dirname}/../views/mail/${template}.pug`, {
       url: this.url,
       title: this.title,
+      message: message,
       subject,
     });
 
@@ -61,5 +64,9 @@ module.exports = class Email {
       "password-reset",
       "Your password reset token (valid for only 10 minutes)"
     );
+  }
+
+  async sendEmailToWaitlist(message) {
+    await this.send("waitlist-email", "", message);
   }
 };

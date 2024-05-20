@@ -2,24 +2,9 @@ const db = require("../config/db");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const { trim } = require("validator");
+const { convertCategoriesToArray, sendResponse } = require("../utils/general");
 
 const isIdaNumberMsg = "Invalid ID! (ID must be a number)";
-
-const convertCategoriesToArray = (data) => {
-  let res = [];
-
-  for (let i = 0; i < data.length; i++) {
-    for (const [key, value] of Object.entries(data[i])) {
-      if (key === "categories") {
-        data[i][key] = value.split("-");
-      }
-    }
-
-    res.push(data[i]);
-  }
-
-  return res;
-};
 
 const formatReqBody = (body, table) => {
   let data = {};
@@ -41,18 +26,6 @@ const formatReqBody = (body, table) => {
   }
 
   return data;
-};
-
-const sendResponse = (res, table, response, statusCode) => {
-  const results = response.length > 1 ? response.length : undefined;
-
-  let tableName = results ? table : table.slice(0, -1);
-
-  res.status(statusCode).json({
-    status: "success",
-    results,
-    [tableName]: response,
-  });
 };
 
 exports.getAll = (table, filteredColumns) => {
@@ -82,7 +55,11 @@ exports.createOne = (table) => {
     const [row] = await db.query(sql, data);
 
     // Get newly inserted row
-    const [result] = await db.query(`SELECT * FROM ${table} WHERE id = ?`, row.insertId);
+    let [result] = await db.query(`SELECT * FROM ${table} WHERE id = ?`, row.insertId);
+
+    if (table === "products") {
+      result = convertCategoriesToArray(result);
+    }
 
     sendResponse(res, table, result[0], 201);
   });
@@ -149,7 +126,7 @@ exports.updateOne = (table, filteredColumns, data) => {
     await db.query(sql, [update, id]);
 
     // Get updated row
-    const [result, ...others] = await db.query(
+    let [result, ...others] = await db.query(
       `SELECT ${columns} FROM ${table} WHERE id = ?`,
       id
     );
@@ -159,7 +136,9 @@ exports.updateOne = (table, filteredColumns, data) => {
       return next(new AppError(`No ${table.slice(0, -1)} found with that id`, 404));
     }
 
-    convertCategoriesToArray(result);
+    if (table === "products") {
+      result = convertCategoriesToArray(result);
+    }
 
     sendResponse(res, table, result, 200);
   });
