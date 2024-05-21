@@ -7,7 +7,7 @@ const AppError = require("../utils/appError");
 exports.addToCart = catchAsync(async (req, res, next) => {
   //get user's cart id
   let cart_Id;
-  const { product_id, quantity } = req.body;
+  const { id: product_id, quantity } = req.body;
 
   // get cart id if user alread had a cart
   cart_Id = (await db.query("SELECT * FROM carts WHERE user_id = ?", req.user.id))[0][0]
