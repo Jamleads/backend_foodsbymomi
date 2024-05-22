@@ -1,2 +1,7 @@
 node_modules
 config/config.env
+
+webpack.*
+
+dev-build
+prod-build
