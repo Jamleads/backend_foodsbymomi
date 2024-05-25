@@ -10,6 +10,7 @@ const advertMessageRoute = require("./routes/advertMessageRoute");
 const authRoute = require("./routes/authRoute");
 const userRoute = require("./routes/userRoute");
 const cartRoute = require("./routes/cartRoute");
+const orderRoute = require("./routes/orderRoutes");
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/cart", cartRoute);
+app.use("/api/v1/order", orderRoute);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

@@ -99,7 +99,7 @@ exports.removeProductFromCart = catchAsync(async (req, res, next) => {
   next();
 });
 
-exports.clearCart = catchAsync(async (req, res, next) => {
+exports.clearCartFn = async (req, next) => {
   // get cart id
   const cart_id = (
     await db.query("SELECT * FROM carts WHERE user_id = ?", req.user.id)
@@ -109,8 +109,16 @@ exports.clearCart = catchAsync(async (req, res, next) => {
     return next(new AppError("User has no cart at the moment!", 404));
   }
 
+  //delete cart items for the cart
+  await db.query("DELETE FROM cart_items WHERE cart_id = ?", cart_id);
+
   // delete cart
   await db.query("DELETE FROM carts WHERE id = ? ", cart_id);
+};
+
+exports.clearCart = catchAsync(async (req, res, next) => {
+  //clear cart
+  await this.clearCartFn(req, next);
 
   res.status(200).json({
     status: "success",

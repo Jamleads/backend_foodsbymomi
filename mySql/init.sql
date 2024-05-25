@@ -94,7 +94,7 @@ CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled') NOT NULL,
+    status ENUM('Pending', 'Processing', 'completed', 'Cancelled') NOT NULL DEFAULT 'pending',
     total DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id)
 );

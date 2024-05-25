@@ -8,8 +8,11 @@ const {
   deleteUser,
   updateUser,
 } = require("../controller/userController");
+const orderRoutes = require("../routes/orderRoutes");
 
 const router = express.Router();
+
+router.use("/orders", orderRoutes);
 
 router.use(protect);
 

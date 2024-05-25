@@ -6,11 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "start:dev": "nodemon server.js",
-    "start:prod": "SET NODE_ENV=production&&nodemon server.js",
-    "start:dev:build": "node ./dev-build/main.js",
-    "start:prod:build": "node ./prod-build/main.js",
-    "build:dev": "webpack --config webpack.dev.js --mode development",
-    "build:prod": "webpack --config webpack.prod.js --mode production"
+    "start:prod": "SET NODE_ENV=production&&nodemon server.js"
   },
   "author": "",
   "license": "ISC",
