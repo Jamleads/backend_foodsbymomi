@@ -35,7 +35,6 @@ module.exports = class Cloudinary {
   async delete(imageName) {
     try {
       await cloudinary.uploader.destroy(imageName);
-      return result;
     } catch (err) {
       console.error("Error deleting image:", err);
     }

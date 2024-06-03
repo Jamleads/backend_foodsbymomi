@@ -28,8 +28,6 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
   // Check if there is a file on requst object
   if (!req.file) return next();
 
-  console.log(req.file);
-
   // store edited photo in data
   const data = await sharp(req.file.buffer)
     .toFormat("jpeg")
@@ -37,8 +35,6 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
     .toBuffer();
 
   const imageInfo = await new Cloudinary().upload(data);
-
-  console.log({ imageInfo });
 
   // // Get url and name of photo
   const imageUrl = imageInfo.secure_url;

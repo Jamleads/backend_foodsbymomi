@@ -17,7 +17,6 @@ router.use("/orders", orderRoutes);
 
 router.use(protect);
 
-// TODO
 router.put(
   "/update-me",
   multerAndSharp.uploadUserPhoto,

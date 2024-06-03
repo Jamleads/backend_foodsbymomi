@@ -8,6 +8,7 @@ const {
   getFeaturedProducts,
 } = require("../controller/productController");
 const { protect, restrictTo } = require("../controller/authController");
+const multerAndSharp = require("../utils/multerAndSharp");
 
 const router = express.Router();
 
@@ -19,8 +20,13 @@ router.use(restrictTo("admin"));
 
 router.route("/featured-products").get(getFeaturedProducts);
 
-router.route("/create").post(createProduct);
+router
+  .route("/create")
+  .post(multerAndSharp.uploadUserPhoto, multerAndSharp.resizeUserPhoto, createProduct);
 
-router.route("/:id").delete(deleteProduct).put(updateProduct);
+router
+  .route("/:id")
+  .delete(deleteProduct)
+  .put(multerAndSharp.uploadUserPhoto, multerAndSharp.resizeUserPhoto, updateProduct);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const { trim } = require("validator");
 const { convertCategoriesToArray, sendResponse } = require("../utils/general");
+const Cloudinary = require("../utils/cloudinary");
 
 const isIdaNumberMsg = "Invalid ID! (ID must be a number)";
 
@@ -10,7 +11,7 @@ const formatReqBody = (body, table) => {
   let data = {};
 
   // convert categories to string
-  if (table === "products") {
+  if (table === "products" && body.categories) {
     body.categories = body.categories.join("-");
   }
 
@@ -50,6 +51,11 @@ exports.createOne = (table) => {
   return catchAsync(async (req, res, next) => {
     const sql = `INSERT INTO ${table} SET ?`;
     const data = formatReqBody(req.body, table);
+
+    if (table === "products") {
+      data.imageUrl = req.imageUrl;
+      data.imageName = req.imageName;
+    }
 
     // Insert data into table
     const [row] = await db.query(sql, data);
@@ -120,6 +126,20 @@ exports.updateOne = (table, filteredColumns, data) => {
     // Check if id is a number
     if (!Number(id)) {
       return next(new AppError(isIdaNumberMsg, 404));
+    }
+
+    // Check if product image is being updated
+    if (req.imageName && table === "products") {
+      const prevImageName = (
+        await db.query(`SELECT imageName FROM ${table} WHERE id = ?`, id)
+      )[0][0];
+
+      // Delete previous image
+      await new Cloudinary().delete(prevImageName.imageName);
+
+      // Add image name and url
+      update.imageName = req.imageName;
+      update.imageUrl = req.imageUrl;
     }
 
     // update row
