@@ -111,7 +111,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
   // Get current user
   const newUser = (
     await db.query(
-      `SELECT id, name, email, role, phone, profilePhotoUrl FROM users WHERE id = ${newUserId} `
+      `SELECT id, name, email, role, phone, imageUrl FROM users WHERE id = ${newUserId} `
     )
   )[0][0];
 
@@ -142,7 +142,7 @@ exports.login = catchAsync(async (req, res, next) => {
   // Check if user exist and password is correct
   const user = (
     await db.query(
-      "SELECT id, name, email, role, phone, profilePhotoUrl, password FROM users WHERE email = ?",
+      "SELECT id, name, email, role, phone, imageUrl, password FROM users WHERE email = ?",
       email
     )
   )[0][0];
@@ -186,25 +186,6 @@ exports.protect = catchAsync(async (req, res, next) => {
   if (changedPasswordAfter(decoded.iat, user)) {
     return next(new AppError("Password changed recently, Login again", 401));
   }
-
-  // TODO
-  //   // Check if user has a profile photo and if the url has expired, get a new url
-  //   if (user.profilePhotoUrlExp && Date.now() > new Date(user.profilePhotoUrlExp)) {
-  //     // Get new signed url for profile photo
-  //     const url = await s3.getSignedUrl(user.profilePhotoName);
-
-  // const updateForm = {};
-
-  // // Set the value of the profile photo url and expiration time in update form
-  // updateForm.profilePhotoUrl = url;
-  // updateForm.profilePhotoUrlExp = setProfilePhotoUrlExpTime.setProfilePhotoExp();
-
-  // // save update form to database
-  // const sql = "UPDATE users SET ? WHERE id = ?";
-  // await db.query(sql, [updateForm, user.id]);
-
-  // Get updated user
-  // user = (await db.query("SELECT * FROM users WHERE id = ?", user.id))[0][0];
 
   user.password = undefined;
 
@@ -256,7 +237,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   // Get updated user
   const updatedUser = (
     await db.query(
-      "SELECT id, name, email, role, phone, profilePhotoUrl, password FROM users WHERE id = ? ",
+      "SELECT id, name, email, role, phone, imageUrl, password FROM users WHERE id = ? ",
       req.user.id
     )
   )[0][0];
@@ -310,7 +291,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   // Get the user based on the token
   const sql =
-    "SELECT id, name, email, role, phone, profilePhotoUrl, password FROM users WHERE passwordResetToken = ? AND passwordResetExpires > NOW()";
+    "SELECT id, name, email, role, phone, imageUrl, password FROM users WHERE passwordResetToken = ? AND passwordResetExpires > NOW()";
   const user = (await db.query(sql, hashedToken))[0][0];
 
   // If no user then token is either invalid or expired.

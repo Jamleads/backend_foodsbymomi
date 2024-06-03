@@ -9,6 +9,7 @@ const {
   updateUser,
 } = require("../controller/userController");
 const orderRoutes = require("../routes/orderRoutes");
+const multerAndSharp = require("../utils/multerAndSharp");
 
 const router = express.Router();
 
@@ -19,8 +20,8 @@ router.use(protect);
 // TODO
 router.put(
   "/update-me",
-  //   multerAndSharp.uploadUserPhoto,
-  //   multerAndSharp.resizeUserPhoto,
+  multerAndSharp.uploadUserPhoto,
+  multerAndSharp.resizeUserPhoto,
   updateMe
 );
 

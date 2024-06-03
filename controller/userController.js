@@ -2,9 +2,10 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const db = require("../config/db");
 const Factory = require("../controller/handlerFactory");
+const Cloudinary = require("../utils/cloudinary");
 
 // selected fields
-const columns = "id, name, email, role, phone, profilePhotoUrl, active";
+const columns = "id, name, email, role, phone, imageUrl, active";
 
 const filterObj = (obj, ...options) => {
   let newObj = {};
@@ -32,20 +33,15 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   // Filter out fileds that are not allowed to be updated
   const filteredBody = filterObj(req.body, "name", "email", "phone");
 
-  // TODO
-  //   // Check if profile photo is being updated and add to filterdBody
-  //   if (req.imageName) {
-  //     // Delete previous profile photo
-  //     req.user.profilePhotoName && (await s3.deleteFile(req.user.profilePhotoName));
+  // Check if profile photo is being updated and add to filterdBody
+  if (req.imageName) {
+    // Delete previous profile photo
+    req.user.imageName && (await new Cloudinary().delete(req.user.imageName));
 
-  //     // Set the profile photo expiration time
-  //     const profilePhotoUrlExp = setProfilePhotoUrlExpTime.setProfilePhotoExp();
-
-  //     // Add image name, profile photo url and progile photo expiration time to filterdBody
-  //     filteredBody.profilePhotoName = req.imageName;
-  //     filteredBody.profilePhotoUrl = req.imageUrl;
-  //     filteredBody.profilePhotoUrlExp = profilePhotoUrlExp;
-  //   }
+    // Add image name and profile photo url to filterdBody
+    filteredBody.imageName = req.imageName;
+    filteredBody.imageUrl = req.imageUrl;
+  }
 
   // Update user
   const sql = "UPDATE users SET ? WHERE id = ?";
