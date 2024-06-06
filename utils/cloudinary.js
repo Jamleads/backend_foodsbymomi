@@ -1,8 +1,5 @@
-require("dotenv").config({ path: "./config/config.env" });
-// Require the cloudinary library
 const cloudinary = require("cloudinary").v2;
 
-// Return "https" URLs by setting secure: true
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
