@@ -70,9 +70,6 @@ exports.setAdminRole = (req, res, next) => {
 exports.signUp = catchAsync(async (req, res, next) => {
   const { name, email, password, passwordConfirm, role } = req.body;
 
-  console.log(role);
-  console.log(req.body);
-
   // check if first name and last name are empty strings
   if (name.trim() === "") return next(new AppError("Name is required", 400));
 
@@ -101,12 +98,22 @@ exports.signUp = catchAsync(async (req, res, next) => {
   //   Hash password
   const hashedPassword = await bcrypt.hash(password, 12);
 
-  // Generate refferal code
-  const referralCode = generateReferralCode();
+  // Generate unique refferal code
+  let referralCode;
+  referralCode = generateReferralCode();
+
+  // Check of referral code is already used
+  const isReferralCode = (
+    await db.query("SELECT referralCode FROM users WHERE referralCode = ?", referralCode)
+  )[0][0];
+
+  if (isReferralCode) {
+    referralCode = generateReferralCode();
+  }
 
   //    Insert new user
   const dataCustomer = { name, email, password: hashedPassword, referralCode };
-  const dataAdmin = { name, email, password: hashedPassword, role };
+  const dataAdmin = { name, email, password: hashedPassword, role, referralCode };
   const data = role ? dataAdmin : dataCustomer;
   const sql = "INSERT INTO users SET ?";
 
