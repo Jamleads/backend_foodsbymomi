@@ -24,6 +24,7 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL, 
     email VARCHAR(255) UNIQUE, 
     phone VARCHAR(255),
+    referralCode VArchar(64) UNIQUE,
     password VARCHAR(255) NOT NULL, 
     role ENUM ('admin', 'customer') NOT NULL DEFAULT 'customer', 
     active ENUM ('true', 'false') NOT NULL DEFAULT 'true',

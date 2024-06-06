@@ -7,6 +7,7 @@ const catchAsync = require("../utils/catchAsync");
 const validator = require("validator");
 const { promisify } = require("util");
 const Email = require("../utils/email");
+const { generateReferralCode } = require("../utils/general");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -100,10 +101,13 @@ exports.signUp = catchAsync(async (req, res, next) => {
   //   Hash password
   const hashedPassword = await bcrypt.hash(password, 12);
 
+  // Generate refferal code
+  const referralCode = generateReferralCode();
+
   //    Insert new user
-  const data1 = { name, email, password: hashedPassword };
-  const data2 = { name, email, password: hashedPassword, role };
-  const data = role ? data2 : data1;
+  const dataCustomer = { name, email, password: hashedPassword, referralCode };
+  const dataAdmin = { name, email, password: hashedPassword, role };
+  const data = role ? dataAdmin : dataCustomer;
   const sql = "INSERT INTO users SET ?";
 
   const newUserId = (await db.query(sql, data))[0].insertId;
@@ -111,7 +115,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
   // Get current user
   const newUser = (
     await db.query(
-      `SELECT id, name, email, role, phone, imageUrl FROM users WHERE id = ${newUserId} `
+      `SELECT id, name, email, role, phone, imageUrl, referralCode FROM users WHERE id = ${newUserId} `
     )
   )[0][0];
 
@@ -142,7 +146,7 @@ exports.login = catchAsync(async (req, res, next) => {
   // Check if user exist and password is correct
   const user = (
     await db.query(
-      "SELECT id, name, email, role, phone, imageUrl, password FROM users WHERE email = ?",
+      "SELECT id, name, email, role, phone, imageUrl, password, referralCode FROM users WHERE email = ?",
       email
     )
   )[0][0];
@@ -237,7 +241,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   // Get updated user
   const updatedUser = (
     await db.query(
-      "SELECT id, name, email, role, phone, imageUrl, password FROM users WHERE id = ? ",
+      "SELECT id, name, email, role, phone, imageUrl, password, referralCode FROM users WHERE id = ? ",
       req.user.id
     )
   )[0][0];
@@ -291,7 +295,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   // Get the user based on the token
   const sql =
-    "SELECT id, name, email, role, phone, imageUrl, password FROM users WHERE passwordResetToken = ? AND passwordResetExpires > NOW()";
+    "SELECT id, name, email, role, phone, imageUrl, password, referralCode FROM users WHERE passwordResetToken = ? AND passwordResetExpires > NOW()";
   const user = (await db.query(sql, hashedToken))[0][0];
 
   // If no user then token is either invalid or expired.
