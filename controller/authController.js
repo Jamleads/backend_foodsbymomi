@@ -68,7 +68,7 @@ exports.setAdminRole = (req, res, next) => {
 };
 
 exports.signUp = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm, role } = req.body;
+  const { name, email, password, passwordConfirm, role, referralCode } = req.body;
 
   // check if first name and last name are empty strings
   if (name.trim() === "") return next(new AppError("Name is required", 400));
@@ -99,30 +99,64 @@ exports.signUp = catchAsync(async (req, res, next) => {
   const hashedPassword = await bcrypt.hash(password, 12);
 
   // Generate unique refferal code
-  let referralCode;
-  referralCode = generateReferralCode();
+  let genReferralCode;
+  genReferralCode = generateReferralCode();
 
   // Check of referral code is already used
   const isReferralCode = (
-    await db.query("SELECT referralCode FROM users WHERE referralCode = ?", referralCode)
+    await db.query(
+      "SELECT referralCode FROM users WHERE referralCode = ?",
+      genReferralCode
+    )
   )[0][0];
 
   if (isReferralCode) {
-    referralCode = generateReferralCode();
+    genReferralCode = generateReferralCode();
+  }
+
+  // if referralCode is provided get referrers id
+  let referrersId;
+
+  if (referralCode) {
+    referrersId = (
+      await db.query("SELECT id FROM users WHERE referralCode = ?", referralCode)
+    )[0][0].id;
   }
 
   //    Insert new user
-  const dataCustomer = { name, email, password: hashedPassword, referralCode };
-  const dataAdmin = { name, email, password: hashedPassword, role, referralCode };
+  const dataCustomer = {
+    name,
+    email,
+    password: hashedPassword,
+    referralCode: genReferralCode,
+    referred_by: referrersId,
+  };
+
+  const dataAdmin = {
+    name,
+    email,
+    password: hashedPassword,
+    role,
+  };
+
   const data = role ? dataAdmin : dataCustomer;
   const sql = "INSERT INTO users SET ?";
 
   const newUserId = (await db.query(sql, data))[0].insertId;
 
+  const referralsData = {
+    referrer_id: referrersId,
+    referee_id: newUserId,
+  };
+
+  if (referralCode) {
+    await db.query("INSERT INTO referrals SET ?", referralsData);
+  }
+
   // Get current user
   const newUser = (
     await db.query(
-      `SELECT id, name, email, role, phone, imageUrl, referralCode FROM users WHERE id = ${newUserId} `
+      `SELECT id, name, email, role, phone, imageUrl, referralCode, referred_by FROM users WHERE id = ${newUserId} `
     )
   )[0][0];
 

@@ -7,6 +7,7 @@ const {
   getUser,
   deleteUser,
   updateUser,
+  getUserReferrals,
 } = require("../controller/userController");
 const orderRoutes = require("../routes/orderRoutes");
 const multerAndSharp = require("../utils/multerAndSharp");
@@ -26,11 +27,15 @@ router.put(
 
 router.delete("/delete-me", deleteMe);
 
+router.route("/me/referrals").get(getUserReferrals);
+
 //restrict to only admin
 router.use(restrictTo("admin"));
 
 router.route("/").get(getAllUsers);
 
 router.route("/:id").get(getUser).delete(deleteUser).put(updateUser);
+
+router.route("/:id/referrals").get(getUserReferrals);
 
 module.exports = router;

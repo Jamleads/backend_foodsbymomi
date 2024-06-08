@@ -70,6 +70,22 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getUserReferrals = catchAsync(async (req, res, next) => {
+  const sql =
+    "SELECT users.id, name, email, imageUrl FROM referrals JOIN users ON users.id = referrals.referee_id WHERE referrer_id = ?";
+
+  const id = req.params.id || req.user.id;
+
+  const referrals = (await db.query(sql, id))[0];
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      referrals,
+    },
+  });
+});
+
 exports.getAllUsers = Factory.getAll("users", columns);
 exports.getUser = Factory.getOne("users", columns);
 exports.deleteUser = Factory.deleteOne("users");
