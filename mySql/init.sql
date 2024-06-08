@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS carts;
 DROP TABLE IF EXISTS favorites;
 DROP TABLE IF EXISTS advert_messages;
 DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS referrals;
 DROP TABLE IF EXISTS payments;
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS waitlists;
@@ -24,7 +25,8 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL, 
     email VARCHAR(255) UNIQUE, 
     phone VARCHAR(255),
-    referralCode VArchar(64) UNIQUE,
+    referralCode VARCHAR(64) UNIQUE,
+    referred_by VARCHAR(64),
     password VARCHAR(255) NOT NULL, 
     role ENUM ('admin', 'customer') NOT NULL DEFAULT 'customer', 
     active ENUM ('true', 'false') NOT NULL DEFAULT 'true',
@@ -88,7 +90,8 @@ CREATE TABLE advert_messages (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     text VARCHAR(512) NOT NULL,
     image VARCHAR(255),
-    backgroundImage VARCHAR(255)
+    backgroundImage VARCHAR(255),
+	created_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE orders (
@@ -97,6 +100,7 @@ CREATE TABLE orders (
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status ENUM('Pending', 'Processing', 'completed', 'Cancelled') NOT NULL DEFAULT 'pending',
     total DECIMAL(10, 2) NOT NULL,
+	created_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
@@ -106,6 +110,7 @@ CREATE TABLE order_items (
     product_id INT NOT NULL,
     quantity INT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
+	created_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (order_id) REFERENCES orders(id),
     FOREIGN KEY (product_id) REFERENCES products(id)
 );
@@ -116,6 +121,14 @@ CREATE TABLE payments (
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     amount DECIMAL(10, 2) NOT NULL,
     status ENUM('Pending', 'Completed', 'Failed') NOT NULL,
+	created_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+
+CREATE TABLE referrals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    referrer_id INT NOT NULL,
+    referee_id INT NOT NULL,
+	created_at TIMESTAMP DEFAULT NOW()
 );
 
