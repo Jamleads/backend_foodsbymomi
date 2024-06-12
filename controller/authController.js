@@ -120,17 +120,18 @@ exports.signUp = catchAsync(async (req, res, next) => {
   if (referralCode) {
     referrersId = (
       await db.query("SELECT id FROM users WHERE referralCode = ?", referralCode)
-    )[0][0].id;
+    )[0][0]?.id;
   }
 
-  //    Insert new user
+  // Insert new user
   const dataCustomer = {
     name,
     email,
     password: hashedPassword,
     referralCode: genReferralCode,
-    referred_by: referrersId,
   };
+
+  referrersId && (dataCustomer.referred_by = referrersId);
 
   const dataAdmin = {
     name,
@@ -149,7 +150,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
     referee_id: newUserId,
   };
 
-  if (referralCode) {
+  if (referrersId) {
     await db.query("INSERT INTO referrals SET ?", referralsData);
   }
 

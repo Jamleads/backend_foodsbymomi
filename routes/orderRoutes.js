@@ -7,7 +7,6 @@ const {
   getAllOrdersOfOneUser,
   updateOrderStatus,
 } = require("../controller/orderController");
-const cartController = require("../controller/cartController");
 
 const router = express.Router({ mergeParams: true });
 

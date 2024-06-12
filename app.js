@@ -1,6 +1,7 @@
 const express = require("express");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
 
 const globalErrorHandler = require("./controller/error");
 const AppError = require("./utils/appError");
@@ -11,6 +12,7 @@ const authRoute = require("./routes/authRoute");
 const userRoute = require("./routes/userRoute");
 const cartRoute = require("./routes/cartRoute");
 const orderRoute = require("./routes/orderRoutes");
+const orderController = require("./controller/orderController");
 
 const app = express();
 
@@ -18,6 +20,12 @@ const app = express();
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
+
+app.post(
+  "/webhook-checkout",
+  bodyParser.raw({ type: "application/json" }),
+  orderController.webhookCheckout
+);
 
 // Body parser, reading data from body into req.body
 app.use(express.json());

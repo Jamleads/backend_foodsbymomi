@@ -27,8 +27,6 @@ exports.addToCart = catchAsync(async (req, res, next) => {
     ])
   )[0][0];
 
-  console.log({ result });
-
   // IF its not add it
   if (!result) {
     await db.query("INSERT INTO cart_items SET ?", { cart_Id, product_id, quantity });

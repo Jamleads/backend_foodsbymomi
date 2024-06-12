@@ -118,7 +118,6 @@ CREATE TABLE order_items (
 CREATE TABLE payments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     amount DECIMAL(10, 2) NOT NULL,
     status ENUM('Pending', 'Completed', 'Failed') NOT NULL,
 	created_at TIMESTAMP DEFAULT NOW(),
