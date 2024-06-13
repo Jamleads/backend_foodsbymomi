@@ -1,4 +1,5 @@
 const FlutterWave = require("flutterwave-node-v3");
+const axios = require("axios");
 
 const flw = new FlutterWave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY);
 
@@ -23,32 +24,31 @@ exports.verifyTransaction = (id) => {
 
 exports.getPaymentLink = async (id, amount, code, email, phonenumber, name) => {
   try {
-    const { got } = await import("got");
-
-    const response = await got
-      .post("https://api.flutterwave.com/v3/payments", {
+    const response = await axios.post(
+      "https://api.flutterwave.com/v3/payments",
+      {
+        tx_ref: `foodsbymomi-tx-${id}-${amount}-${code}-${Date.now()}`,
+        amount: amount,
+        currency: code,
+        redirect_url: "https://google.com", //TODO
+        customer: {
+          email,
+          phonenumber,
+          name,
+        },
+        customizations: {
+          title: "Foodsbymomi Payments",
+          logo: "http://www.piedpiper.com/app/themes/joystick-v27/images/logo.png", //TODO
+        },
+      },
+      {
         headers: {
           Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
         },
-        json: {
-          tx_ref: `foodsbymomi-tx-${id}-${amount}-${code}-${Date.now()}`,
-          amount: amount,
-          currency: code,
-          redirect_url: "https://google.com",
-          customer: {
-            email,
-            phonenumber,
-            name,
-          },
-          customizations: {
-            title: "Foodsbymomi Payments",
-            logo: "http://www.piedpiper.com/app/themes/joystick-v27/images/logo.png",
-          },
-        },
-      })
-      .json();
+      }
+    );
 
-    return response;
+    return response.data;
   } catch (err) {
     console.log({ err });
   }
