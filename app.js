@@ -2,6 +2,7 @@ const express = require("express");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
+const cors = require("cors");
 
 const globalErrorHandler = require("./controller/error");
 const AppError = require("./utils/appError");
@@ -15,6 +16,12 @@ const orderRoute = require("./routes/orderRoutes");
 const orderController = require("./controller/orderController");
 
 const app = express();
+
+app.enable("trust proxy");
+
+// app.use(cors());
+
+// app.options("*", cors());
 
 // Development logging
 if (process.env.NODE_ENV === "development") {
@@ -33,7 +40,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 //Routes
-// app.use("/", (req, res, next) => res.send("Welcome to foods my momi api"));
+app.get("/", (req, res, next) => res.send("Welcome to foodsmymomi api"));
 app.use("/api/v1/product", productRoute);
 app.use("/api/v1/wait-list", waitlistRoute);
 app.use("/api/v1/advert-message", advertMessageRoute);
