@@ -19,9 +19,21 @@ const app = express();
 
 app.enable("trust proxy");
 
-// app.use(cors());
+const allowedOrigins = ["http://localhost:3000", "https://foodsbymomi.com"];
 
-// app.options("*", cors());
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (allowedOrigins.includes(origin) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error("Origin not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 
 // Development logging
 if (process.env.NODE_ENV === "development") {
