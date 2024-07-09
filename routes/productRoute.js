@@ -14,11 +14,10 @@ const router = express.Router();
 
 router.route("/").get(getAllProduct);
 router.route("/:id").get(getOneProduct);
+router.route("/featured-products").get(getFeaturedProducts);
 
 router.use(protect);
-router.use(restrictTo("admin"));
-
-router.route("/featured-products").get(getFeaturedProducts);
+router.use(restrictTo("admin", "superAdmin"));
 
 router
   .route("/create")

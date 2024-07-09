@@ -10,7 +10,7 @@ const { protect, restrictTo } = require("../controller/authController");
 const router = express.Router();
 
 router.use(protect);
-router.use(restrictTo("admin"));
+router.use(restrictTo("admin", "superAdmin"));
 
 router.route("/").get(getCategory).post(addCategory);
 router.route("/:id").put(updateCategory).delete(deleteCategory);

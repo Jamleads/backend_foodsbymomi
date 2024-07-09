@@ -3,7 +3,6 @@ const authController = require("../controller/authController");
 
 const router = express.Router();
 
-router.post("/admin/signup", authController.setAdminRole, authController.signUp);
 router.post("/user/signup", authController.signUp);
 router.post("/login", authController.login);
 router.get("/logout", authController.logout);
@@ -14,4 +13,6 @@ router.use(authController.protect);
 
 router.put("/update-my-password", authController.updatePassword);
 
+router.use(authController.restrictTo("superAdmin"));
+router.post("/add-admin", authController.setAdminRole, authController.signUp);
 module.exports = router;

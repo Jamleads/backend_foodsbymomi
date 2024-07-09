@@ -30,7 +30,7 @@ router.delete("/delete-me", deleteMe);
 router.route("/me/referrals").get(getUserReferrals);
 
 //restrict to only admin
-router.use(restrictTo("admin"));
+router.use(restrictTo("admin", "superAdmin"));
 
 router.route("/").get(getAllUsers);
 

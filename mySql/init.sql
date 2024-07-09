@@ -17,7 +17,7 @@ CREATE TABLE waitlists (
     phone VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     location VARCHAR(255) NOT NULL,
-    heard_about_us ENUM("friend", "twitter", "facebook"),
+    heard_about_us ENUM("friend", "news", "socail media", "event"),
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -29,7 +29,7 @@ CREATE TABLE users (
     referralCode VARCHAR(64) UNIQUE,
     referred_by VARCHAR(64),
     password VARCHAR(255) NOT NULL, 
-    role ENUM ('admin', 'customer') NOT NULL DEFAULT 'customer', 
+    role ENUM ('superAdmin', 'admin', 'customer') NOT NULL DEFAULT 'customer', 
     active ENUM ('true', 'false') NOT NULL DEFAULT 'true',
     imageName VARCHAR(255),
     imageUrl VARCHAR(700),

@@ -18,7 +18,7 @@ router.route("/me").get(getAllOrdersOfOneUser);
 router.route("/:id").get(getOrderById);
 
 // restrict to only admins
-router.use(restrictTo("admin"));
+router.use(restrictTo("admin", "superAdmin"));
 
 router.route("/").get(getAllOrders);
 router.route("/:id").put(updateOrderStatus);

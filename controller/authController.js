@@ -140,7 +140,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
     role,
   };
 
-  const data = role ? dataAdmin : dataCustomer;
+  const data = role === "admin" ? dataAdmin : dataCustomer;
   const sql = "INSERT INTO users SET ?";
 
   const newUserId = (await db.query(sql, data))[0].insertId;
