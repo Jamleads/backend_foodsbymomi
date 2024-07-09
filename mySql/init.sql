@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS waitlists;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS product_categorys;
 
 CREATE TABLE waitlists (
 	id INT AUTO_INCREMENT PRIMARY KEY, 
@@ -129,5 +130,10 @@ CREATE TABLE referrals (
     referrer_id INT NOT NULL,
     referee_id INT NOT NULL,
 	created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE product_categorys (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
 );
 
