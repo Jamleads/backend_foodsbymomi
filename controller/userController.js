@@ -86,7 +86,26 @@ exports.getUserReferrals = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getAllUsers = Factory.getAll("users", columns);
+exports.getAllAdmins = catchAsync(async (req, res, next) => {
+  const admins = (await db.query(`SELECT ${columns} FROM users WHERE role = 'admin'`))[0];
+
+  res.status(200).json({
+    status: "success",
+    admins,
+  });
+});
+
+exports.getAllUsers = catchAsync(async (req, res, next) => {
+  const users = (
+    await db.query(`SELECT ${columns} FROM users WHERE role = 'customer'`)
+  )[0];
+
+  res.status(200).json({
+    status: "success",
+    users,
+  });
+});
+
 exports.getUser = Factory.getOne("users", columns);
 exports.deleteUser = Factory.deleteOne("users");
 exports.updateUser = Factory.updateOne("users", columns);

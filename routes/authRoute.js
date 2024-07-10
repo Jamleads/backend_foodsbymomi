@@ -1,5 +1,6 @@
 const express = require("express");
 const authController = require("../controller/authController");
+const { getAllAdmins, deleteUser, getUser } = require("../controller/userController");
 
 const router = express.Router();
 
@@ -15,4 +16,6 @@ router.put("/update-my-password", authController.updatePassword);
 
 router.use(authController.restrictTo("superAdmin"));
 router.post("/add-admin", authController.setAdminRole, authController.signUp);
+router.route("/admin").get(getAllAdmins);
+router.route("/admin/:id").get(getUser).delete(deleteUser);
 module.exports = router;
