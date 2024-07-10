@@ -2,7 +2,7 @@ const express = require("express");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
-// const cors = require("cors");
+const cors = require("cors");
 
 const globalErrorHandler = require("./controller/error");
 const AppError = require("./utils/appError");
@@ -18,7 +18,7 @@ const orderController = require("./controller/orderController");
 
 const app = express();
 
-// app.enable("trust proxy");
+app.enable("trust proxy");
 
 // const allowedOrigins = ["http://localhost:3000", "https://foodsbymomi.com"];
 
@@ -34,7 +34,9 @@ const app = express();
 //   optionsSuccessStatus: 200,
 // };
 
-// app.use(cors(corsOptions));
+app.use(cors());
+
+app.options("*", cors());
 
 // Development logging
 if (process.env.NODE_ENV === "development") {
