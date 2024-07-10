@@ -2,7 +2,7 @@ const express = require("express");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
-const cors = require("cors");
+// const cors = require("cors");
 
 const globalErrorHandler = require("./controller/error");
 const AppError = require("./utils/appError");
@@ -18,29 +18,30 @@ const orderController = require("./controller/orderController");
 
 const app = express();
 
-app.enable("trust proxy");
+// app.enable("trust proxy");
 
-const allowedOrigins = ["http://localhost:3000", "https://foodsbymomi.com"];
+// const allowedOrigins = ["http://localhost:3000", "https://foodsbymomi.com"];
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error("Origin not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  optionsSuccessStatus: 200,
-};
+// const corsOptions = {
+//   origin: (origin, callback) => {
+//     if (allowedOrigins.includes(origin) || !origin) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Origin not allowed by CORS"));
+//     }
+//   },
+//   credentials: true,
+//   optionsSuccessStatus: 200,
+// };
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
 
 // Development logging
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
+//TODO positionong?
 app.post(
   "/webhook-checkout",
   bodyParser.raw({ type: "application/json" }),
