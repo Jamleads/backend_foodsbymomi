@@ -5,7 +5,7 @@ const Email = require("../utils/email");
 const { clearCartFn } = require("./cartController");
 const { verifyTransaction, getPaymentLink } = require("../utils/flutterwave");
 
-const updatePayment = async (order_id, status) => {
+const updatePayment = async (order_id, status, currency, amount) => {
   const payment = (
     await db.query("SELECT * FROM payments WHERE order_id = ?", order_id)
   )[0][0];
@@ -19,8 +19,9 @@ const updatePayment = async (order_id, status) => {
     // update payment table
     await db.query("INSERT INTO payments SET ?", {
       order_id,
-      amount: payload.amount,
+      amount,
       status: status,
+      currency,
     });
   }
 };
@@ -46,7 +47,11 @@ exports.createOrder = catchAsync(async (req, res, next) => {
 
   // create order
   const order_id = (
-    await db.query("INSERT INTO orders SET ?", { user_id: req.user.id, total })
+    await db.query("INSERT INTO orders SET ?", {
+      user_id: req.user.id,
+      total,
+      currency: currencyCode,
+    })
   )[0].insertId;
 
   const getPrice = (code, priceNgn, priceUs, priceUk, priceGhana, priceCanada) => {
@@ -83,6 +88,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       product_id,
       quantity,
       price,
+      currency: currencyCode,
     });
   }
 
@@ -180,18 +186,20 @@ exports.webhookCheckout = catchAsync(async (req, res, next) => {
 
   const payload = req.body;
 
-  const order_id = payload.txRef.split("-")[2];
+  const [, , order_id, amount, currency] = payload.txRef.split("-");
+
+  // const order_id = importantInfo[2];
 
   if (verifyTransaction(payload.id)) {
     //update order
     await db.query("UPDATE orders SET status = 'Processing' WHERE id = ?", order_id);
 
-    await updatePayment(order_id, "Completed");
+    await updatePayment(order_id, "Completed", currency, amount);
   } else {
     //update order
     await db.query("UPDATE orders SET status = 'Pending' WHERE id = ?", order_id);
 
-    await updatePayment(order_id, "Failed");
+    await updatePayment(order_id, "Failed", currency, amount);
 
     //TODO
     // Inform the customer their payment was unsuccessful

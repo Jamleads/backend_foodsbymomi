@@ -101,6 +101,7 @@ CREATE TABLE orders (
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status ENUM('Pending', 'Processing', 'completed', 'Cancelled') NOT NULL DEFAULT 'pending',
     total DECIMAL(10, 2) NOT NULL,
+    currency VARCHAR(16) NOT NULL,
 	created_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
@@ -111,6 +112,7 @@ CREATE TABLE order_items (
     product_id INT NOT NULL,
     quantity INT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
+    currency VARCHAR(16) NOT NULL,
 	created_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (order_id) REFERENCES orders(id),
     FOREIGN KEY (product_id) REFERENCES products(id)
@@ -120,6 +122,7 @@ CREATE TABLE payments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL UNIQUE,
     amount DECIMAL(10, 2) NOT NULL,
+    currency VARCHAR(16) NOT NULL,
     status ENUM('Pending', 'Completed', 'Failed') NOT NULL,
 	created_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (order_id) REFERENCES orders(id)
