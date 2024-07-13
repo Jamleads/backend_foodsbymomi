@@ -9,17 +9,16 @@ module.exports = class Email {
   }
 
   newTransport() {
-    //  TODO
     if (process.env.NODE_ENV !== "development") {
-      // return nodemailer.createTransport({
-      //   pool: true,
-      //   host: process.env.EMAIL_HOST,
-      //   port: process.env.EMAIL_PORT,
-      //   auth: {
-      //     user: process.env.EMAIL_USER,
-      //     pass: process.env.EMAIL_PASSWORD,
-      //   },
-      // });
+      return nodemailer.createTransport({
+        pool: true,
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD,
+        },
+      });
     }
 
     return nodemailer.createTransport({
@@ -68,5 +67,9 @@ module.exports = class Email {
 
   async sendEmailToWaitlist(message) {
     await this.send("waitlist-email", "", message);
+  }
+
+  async sendPaymentFailureEmail() {
+    await this.send("payyment-failure", "Payment Failure!");
   }
 };

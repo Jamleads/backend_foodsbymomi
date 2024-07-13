@@ -15,7 +15,7 @@ CREATE TABLE waitlists (
 	id INT AUTO_INCREMENT PRIMARY KEY, 
     name VARCHAR(255) NOT NULL,
     phone VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
     location VARCHAR(255) NOT NULL,
     heard_about_us ENUM("friend", "news", "socail media", "event"),
     created_at TIMESTAMP DEFAULT NOW()
@@ -118,7 +118,7 @@ CREATE TABLE order_items (
 
 CREATE TABLE payments (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
+    order_id INT NOT NULL UNIQUE,
     amount DECIMAL(10, 2) NOT NULL,
     status ENUM('Pending', 'Completed', 'Failed') NOT NULL,
 	created_at TIMESTAMP DEFAULT NOW(),

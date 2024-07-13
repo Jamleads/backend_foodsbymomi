@@ -18,8 +18,6 @@ const orderController = require("./controller/orderController");
 
 const app = express();
 
-app.enable("trust proxy");
-
 // const allowedOrigins = ["http://localhost:3000", "https://foodsbymomi.com"];
 
 // const corsOptions = {
@@ -34,6 +32,17 @@ app.enable("trust proxy");
 //   optionsSuccessStatus: 200,
 // };
 
+// Body parser, reading data from body into req.body
+app.use(express.json());
+
+app.post(
+  "/webhook-checkout",
+  // bodyParser.raw({ type: "application/json" }),
+  orderController.webhookCheckout
+);
+
+app.enable("trust proxy");
+
 app.use(cors());
 
 app.options("*", cors());
@@ -43,15 +52,6 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-//TODO positionong?
-app.post(
-  "/webhook-checkout",
-  bodyParser.raw({ type: "application/json" }),
-  orderController.webhookCheckout
-);
-
-// Body parser, reading data from body into req.body
-app.use(express.json());
 // Cookie parser
 app.use(cookieParser());
 

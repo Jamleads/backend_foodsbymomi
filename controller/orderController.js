@@ -1,8 +1,29 @@
 const catchAsync = require("../utils/catchAsync");
 const db = require("../config/db");
 const AppError = require("../utils/appError");
+const Email = require("../utils/email");
 const { clearCartFn } = require("./cartController");
 const { verifyTransaction, getPaymentLink } = require("../utils/flutterwave");
+
+const updatePayment = async (order_id, status) => {
+  const payment = (
+    await db.query("SELECT * FROM payments WHERE order_id = ?", order_id)
+  )[0][0];
+
+  if (payment) {
+    await db.query("UPDATE payments SET status = ? WHERE order_id = ?", [
+      status,
+      order_id,
+    ]);
+  } else {
+    // update payment table
+    await db.query("INSERT INTO payments SET ?", {
+      order_id,
+      amount: payload.amount,
+      status: status,
+    });
+  }
+};
 
 exports.createOrder = catchAsync(async (req, res, next) => {
   // total amount
@@ -65,8 +86,6 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     });
   }
 
-  //TODO
-  //clear cart
   await clearCartFn(req, next);
 
   // GET PAYMENT LINK
@@ -161,24 +180,23 @@ exports.webhookCheckout = catchAsync(async (req, res, next) => {
 
   const payload = req.body;
 
-  const order_id = payload.txRef.split("-");
+  const order_id = payload.txRef.split("-")[2];
 
   if (verifyTransaction(payload.id)) {
     //update order
     await db.query("UPDATE orders SET status = 'Processing' WHERE id = ?", order_id);
 
-    // update payment table
-    await db.query("INSERT INTO payments SET ?", {
-      order_id,
-      amount: payload.amount,
-      status: "Completed",
-    });
-
-    //clear cart
-    await clearCartFn(req, next);
+    await updatePayment(order_id, "Completed");
   } else {
+    //update order
+    await db.query("UPDATE orders SET status = 'Pending' WHERE id = ?", order_id);
+
+    await updatePayment(order_id, "Failed");
+
     //TODO
     // Inform the customer their payment was unsuccessful
+    // send email
+    // await new Email(newUser);
   }
 
   res.status(200).end();
