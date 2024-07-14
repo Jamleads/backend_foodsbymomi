@@ -9,6 +9,14 @@ exports.addToCart = catchAsync(async (req, res, next) => {
   let cart_Id;
   const { id: product_id, quantity } = req.body;
 
+  const product = (
+    await db.query("SELECT * FROM products WHERE id = ?", product_id)
+  )[0][0];
+
+  if (!product) {
+    return next(new AppError("No product with that id!", 404));
+  }
+
   // get cart id if user alread had a cart
   cart_Id = (await db.query("SELECT * FROM carts WHERE user_id = ?", req.user.id))[0][0]
     ?.id;
