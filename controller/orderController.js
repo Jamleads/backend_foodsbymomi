@@ -1,9 +1,12 @@
+const Flutterwave = require("flutterwave-node-v3");
 const catchAsync = require("../utils/catchAsync");
 const db = require("../config/db");
 const AppError = require("../utils/appError");
 const Email = require("../utils/email");
 const { clearCartFn } = require("./cartController");
-const { verifyTransaction, getPaymentLink } = require("../utils/flutterwave");
+const { getPaymentLink } = require("../utils/flutterwave");
+
+const flw = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY);
 
 const updatePayment = async (order_id, status, currency, amount) => {
   const payment = (
@@ -182,30 +185,39 @@ exports.updateOrderStatus = catchAsync(async (req, res, next) => {
 exports.webhookCheckout = catchAsync(async (req, res, next) => {
   const secretHash = req.headers["verif-hash"];
 
-  if (process.env.WEBHOOK_SECRET_HASH !== secretHash) res.status(401).end();
+  if (process.env.WEBHOOK_SECRET_HASH !== secretHash) {
+    return res.status(401).end();
+  }
 
   const payload = req.body;
 
   const [, , order_id, amount, currency] = payload.txRef.split("-");
 
-  // const order_id = importantInfo[2];
+  try {
+    const response = await flw.Transaction.verify({ id: payload.id });
 
-  if (verifyTransaction(payload.id)) {
-    //update order
-    await db.query("UPDATE orders SET status = 'Processing' WHERE id = ?", order_id);
+    if (
+      response.status === "success" &&
+      response.data.amount === parseFloat(amount) &&
+      response.data.currency === currency
+    ) {
+      await db.query("UPDATE orders SET status = 'Processing' WHERE id = ?", order_id);
+      await updatePayment(order_id, "Completed", currency, amount);
+    } else {
+      await db.query("UPDATE orders SET status = 'Pending' WHERE id = ?", order_id);
+      await updatePayment(order_id, "Failed", currency, amount);
 
-    await updatePayment(order_id, "Completed", currency, amount);
-  } else {
-    //update order
-    await db.query("UPDATE orders SET status = 'Pending' WHERE id = ?", order_id);
+      // TODO: Inform the customer their payment was unsuccessful
+      // send email
+      // await new Email(newUser);
+    }
 
-    await updatePayment(order_id, "Failed", currency, amount);
+    // Send the response after all operations are complete
+    res.status(200).end();
+  } catch (err) {
+    console.log(err);
 
-    //TODO
-    // Inform the customer their payment was unsuccessful
-    // send email
-    // await new Email(newUser);
+    // Handle the error (optional)
+    res.status(500).send({ message: "Internal Server Error" });
   }
-
-  res.status(200).end();
 });
