@@ -5,6 +5,7 @@ module.exports = class Email {
   constructor(user, url) {
     this.to = user.email;
     this.url = url;
+    this.name = user.name;
     this.from = `Foodsbymomi <${process.env.EMAIL_FROM}>`;
   }
 
@@ -33,12 +34,14 @@ module.exports = class Email {
   }
 
   // send actual email
-  async send(template, subject, message) {
+  async send(template, subject, message, amount) {
     // render html based on a pug template
     const html = pug.renderFile(`${__dirname}/../views/mail/${template}.pug`, {
       url: this.url,
       title: this.title,
       message: message,
+      name: this.name,
+      amount,
       subject,
     });
 
@@ -66,10 +69,14 @@ module.exports = class Email {
   }
 
   async sendEmailToWaitlist(message) {
-    await this.send("waitlist-email", "", message);
+    await this.send("waitlist-email", "Good News for Waitlist Members!", message);
   }
 
-  async sendPaymentFailureEmail() {
-    await this.send("payyment-failure", "Payment Failure!");
+  async sendPaymentFailureEmail(amount) {
+    await this.send("payment-failure", "Payment Failure!", null, amount);
+  }
+
+  async sendPaymentSuccessfulEmail(amount) {
+    await this.send("payment-success", "Payment Successful!", null, amount);
   }
 };

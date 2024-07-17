@@ -203,13 +203,16 @@ exports.webhookCheckout = catchAsync(async (req, res, next) => {
     ) {
       await db.query("UPDATE orders SET status = 'Processing' WHERE id = ?", order_id);
       await updatePayment(order_id, "Completed", currency, amount);
+
+      await new Email({ email: payload.customer.email }).sendPaymentSuccessfulEmail(
+        amount
+      );
     } else {
       await db.query("UPDATE orders SET status = 'Pending' WHERE id = ?", order_id);
       await updatePayment(order_id, "Failed", currency, amount);
 
-      // TODO: Inform the customer their payment was unsuccessful
-      // send email
-      // await new Email(newUser);
+      // Inform the customer their payment was unsuccessful
+      await new Email({ email: payload.customer.email }).sendPaymentFailureEmail(amount);
     }
 
     // Send the response after all operations are complete
@@ -217,7 +220,6 @@ exports.webhookCheckout = catchAsync(async (req, res, next) => {
   } catch (err) {
     console.log(err);
 
-    // Handle the error (optional)
     res.status(500).send({ message: "Internal Server Error" });
   }
 });
