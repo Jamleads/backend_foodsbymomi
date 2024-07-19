@@ -13,8 +13,8 @@ const multerAndSharp = require("../utils/multerAndSharp");
 const router = express.Router();
 
 router.route("/").get(getAllProduct);
-router.route("/:id").get(getOneProduct);
 router.route("/featured-products").get(getFeaturedProducts);
+router.route("/:id").get(getOneProduct);
 
 router.use(protect);
 router.use(restrictTo("admin", "superAdmin"));
