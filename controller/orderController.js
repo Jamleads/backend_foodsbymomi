@@ -33,7 +33,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
   // total amount
   const { total, currencyCode } = req.body;
 
-  const currencyCodes = ["NGN", "GHS", "GBP", "USD", "CAD"];
+  const currencyCodes = ["NGN", "GHS", "GBP", "USD", "CAD", "EUR"];
 
   if (!currencyCodes.includes(currencyCode)) {
     return next(new AppError("Invalid currency code!", 400));
@@ -57,12 +57,21 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     })
   )[0].insertId;
 
-  const getPrice = (code, priceNgn, priceUs, priceUk, priceGhana, priceCanada) => {
+  const getPrice = (
+    code,
+    priceNgn,
+    priceUs,
+    priceUk,
+    priceGhana,
+    priceCanada,
+    priceEur
+  ) => {
     if (code === "NGN") return priceNgn;
     if (code === "GHS") return priceGhana;
     if (code === "GBP") return priceUk;
     if (code === "USD") return priceUs;
     if (code === "CAD") return priceCanada;
+    if (code === "EUR") return priceEur;
   };
 
   // create order items
@@ -75,6 +84,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       priceUk,
       priceGhana,
       priceCanada,
+      priceEur,
     } = cart[i];
 
     const price = getPrice(
@@ -83,7 +93,8 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       priceUs,
       priceUk,
       priceGhana,
-      priceCanada
+      priceCanada,
+      priceEur
     );
 
     await db.query("INSERT INTO order_items SET ?", {
