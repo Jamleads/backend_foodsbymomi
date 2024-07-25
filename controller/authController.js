@@ -75,14 +75,14 @@ exports.signUp = catchAsync(async (req, res, next) => {
 
   // Check if email is valid
   if (!email || !validator.isEmail(email)) {
-    return next(new AppError("Please enter a valid email!"));
+    return next(new AppError("Please enter a valid email!", 400));
   }
 
   // Check if email is already in use
   const result = (await db.query(`SELECT email FROM users WHERE email = ?`, email))[0];
 
   if (Array.isArray(result) && result.length) {
-    return next(new AppError("Email is already in use!"), 400);
+    return next(new AppError("Email is already in use!", 400));
   }
 
   // Check if password is equal to confirm password
@@ -182,7 +182,7 @@ exports.login = catchAsync(async (req, res, next) => {
 
   // Check if email and password is provided
   if (!email || !password) {
-    return next(new AppError("Please provide a valid email and password!"), 400);
+    return next(new AppError("Please provide a valid email and password!", 400));
   }
 
   // Check if user exist and password is correct
@@ -211,7 +211,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   if (!token) {
-    return next(new AppError("You are not logged in, please log in to get access!"), 401);
+    return next(new AppError("You are not logged in, please log in to get access!", 401));
   }
 
   // Verify token
@@ -345,7 +345,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   // If no user then token is either invalid or expired.
   if (!user) {
-    return next(new AppError("Token is invalid or Expired"), 400);
+    return next(new AppError("Token is invalid or Expired", 400));
   }
 
   // If token is valid, then update password

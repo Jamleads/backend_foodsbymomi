@@ -6,6 +6,7 @@ const {
   getAllOrders,
   getAllOrdersOfOneUser,
   updateOrderStatus,
+  retryPayment,
 } = require("../controller/orderController");
 
 const router = express.Router({ mergeParams: true });
@@ -15,6 +16,7 @@ router.use(protect);
 
 router.route("/check-out").post(createOrder);
 router.route("/me").get(getAllOrdersOfOneUser);
+router.route("/retry-payment/:id").get(retryPayment);
 router.route("/:id").get(getOrderById);
 
 // restrict to only admins

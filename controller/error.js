@@ -40,7 +40,7 @@ const sendErrorDev = (err, req, res) => {
 };
 
 const sendErrorProd = (err, req, res) => {
-  // isOperatonal error: Trusted error
+  // isOperational error: Trusted error
   if (err.isOperational) {
     return res.status(err.statusCode).json({
       status: err.status,
@@ -63,11 +63,9 @@ module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
 
-  console.log(err);
-
   if (process.env.NODE_ENV === "development") {
     sendErrorDev(err, req, res);
-  } else if (process.env.NODE_ENV === "production") {
+  } else {
     let error = { ...err };
     error.message = err.message;
 

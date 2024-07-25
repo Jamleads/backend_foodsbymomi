@@ -120,7 +120,37 @@ exports.createOrder = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    message: "Order submitted sucessfully!",
+    message: "Order submitted successfully!",
+    paymentLink: paymentLink.data.link,
+  });
+});
+
+exports.retryPayment = catchAsync(async (req, res, next) => {
+  // check if order Id is valid and status is pending
+  const order = (
+    await db.query("SELECT * FROM orders WHERE id =? AND status =?", [
+      req.params.id,
+      "Pending",
+    ])
+  )[0][0];
+
+  if (!order) {
+    return next(new AppError("No pending order with that id!", 404));
+  }
+
+  // GET PAYMENT LINK
+  const paymentLink = await getPaymentLink(
+    order.id,
+    order.total,
+    order.currency,
+    req.user.email,
+    req.user.phone,
+    req.user.name
+  );
+
+  res.status(200).json({
+    status: "success",
+    message: "Order retried with new payment link!",
     paymentLink: paymentLink.data.link,
   });
 });
@@ -132,7 +162,7 @@ exports.getOrderById = catchAsync(async (req, res, next) => {
 
   const products = (
     await db.query(
-      "SELECT products.id, title, price, quantity, categories, image FROM orders JOIN order_items ON order_items.order_id = orders.id JOIN products ON order_items.product_id = products.id WHERE orders.id = ?",
+      "SELECT products.id, title, price, quantity, categories FROM orders JOIN order_items ON order_items.order_id = orders.id JOIN products ON order_items.product_id = products.id WHERE orders.id = ?",
       req.params.id
     )
   )[0];
