@@ -16,7 +16,7 @@ exports.getPaymentLink = async (id, amount, code, email, phonenumber, name) => {
         },
         customizations: {
           title: "Foodsbymomi Payments",
-          logo: "http://www.piedpiper.com/app/themes/joystick-v27/images/logo.png", //TODO
+          logo: "https://foodsbymomi.com/assets/logoBg-CKQjXhTv.jpeg",
         },
         configurations: {
           session_duration: 10,
