@@ -8,7 +8,7 @@ exports.getPaymentLink = async (id, amount, code, email, phonenumber, name) => {
         tx_ref: `foodsbymomi-tx-${id}-${amount}-${code}-${Date.now()}`,
         amount: amount,
         currency: code,
-        redirect_url: "https://google.com", //TODO
+        redirect_url: "https://foodsbymomi.com/orders",
         customer: {
           email,
           phonenumber,
