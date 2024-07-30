@@ -162,7 +162,7 @@ exports.getOrderById = catchAsync(async (req, res, next) => {
 
   const products = (
     await db.query(
-      "SELECT products.id, title, price, quantity, categories FROM orders JOIN order_items ON order_items.order_id = orders.id JOIN products ON order_items.product_id = products.id WHERE orders.id = ?",
+      "SELECT products.id, title, price, quantity, categories, imageUrl FROM orders JOIN order_items ON order_items.order_id = orders.id JOIN products ON order_items.product_id = products.id WHERE orders.id = ?",
       req.params.id
     )
   )[0];
