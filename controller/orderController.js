@@ -29,33 +29,137 @@ const updatePayment = async (order_id, status, currency, amount) => {
   }
 };
 
+// body: "response": responseApi
+
 exports.createOrder = catchAsync(async (req, res, next) => {
   // total amount
-  const { total, currencyCode } = req.body;
+  // const { total, currencyCode } = req.body;
+  
+  // const currencyCodes = ["NGN", "GHS", "GBP", "USD", "CAD", "EUR"];
+  
+  // if (!currencyCodes.includes(currencyCode)) {
+    //   return next(new AppError("Invalid currency code!", 400));
+    // }
+    
+    // get currently login users cart
+    // const sql = `SELECT products.*, cart_items.quantity FROM carts JOIN cart_items ON cart_items.cart_id = carts.id JOIN products ON products.id = cart_items.product_id WHERE user_id = ?`;
+    
+    // const cart = (await db.query(sql, req.user.id))[0];
+    
+    // if (!(Array.isArray(cart) && cart.length)) {
+      //   return next(new AppError("User has no cart that requires check out!", 404));
+    // }
+      
 
-  const currencyCodes = ["NGN", "GHS", "GBP", "USD", "CAD", "EUR"];
 
+  // const getPrice = (
+  //   code,
+  //   priceNgn,
+  //   priceUs,
+  //   priceUk,
+  //   priceGhana,
+  //   priceCanada,
+  //   priceEur
+  // ) => {
+  //   if (code === "NGN") return priceNgn;
+  //   if (code === "GHS") return priceGhana;
+  //   if (code === "GBP") return priceUk;
+  //   if (code === "USD") return priceUs;
+  //   if (code === "CAD") return priceCanada;
+  //   if (code === "EUR") return priceEur;
+  // };
+
+  // create order items
+  // for (let i = 0; i < cart.length; i++) {
+  //   const {
+  //     id: product_id,
+  //     quantity,
+  //     priceNgn,
+  //     priceUs,
+  //     priceUk,
+  //     priceGhana,
+  //     priceCanada,
+  //     priceEur,
+  //   } = cart[i];
+
+  //   const price = getPrice(
+  //     currencyCode,
+  //     priceNgn,
+  //     priceUs,
+  //     priceUk,
+  //     priceGhana,
+  //     priceCanada,
+  //     priceEur
+  //   );
+
+  //   await db.query("INSERT INTO order_items SET ?", {
+  //     order_id,
+  //     product_id,
+  //     quantity,
+  //     price,
+  //     currency: currencyCode,
+  //   });
+  // }
+
+  
+  // GET PAYMENT LINK
+  // const paymentLink = await getPaymentLink(
+  //   order_id,
+  //   total,
+  //   currencyCode,
+  //   req.user.email,
+  //   req.user.phone,
+  //   req.user.name
+  // );
+
+  const { response, method } = req.body;
+  if(!method || !response) return next(new AppError("Order cannot be created as method or payload is not provided", 400));
+  if(method == 'alart_pay'){
+    if(response.status != true) return next(new AppError("Order cannot be created as the payment failed", 400));
+    
+      await clearCartFn(req, next);
+      
+      // create order
+      const order_id = (
+        await db.query("INSERT INTO orders SET ?", {
+          user_id: req.user.id,
+          currency: response.data.currency,
+          order_id: response.data.orderId,
+          transaction_id: response.data.id,
+          channel: response.data.channel,
+          time: response.data.createdAt,
+          amount: response.data.amount
+        })
+      )[0].insertId;
+      
+      res.status(200).json({
+        status: "success",
+        message: "Order submitted successfully!",
+        // paymentLink: paymentLink.data.link,
+      });
+  }else {
+    if(method != "flutterwave") return next(new AppError('The payment method specified is invalid', 400));
+
+    const { total, currencyCode } = response;
+
+    console.log("got here")
+
+    const currencyCodes = ["NGN", "GHS", "GBP", "USD", "CAD", "EUR"];
+  
   if (!currencyCodes.includes(currencyCode)) {
-    return next(new AppError("Invalid currency code!", 400));
-  }
+      return next(new AppError("Invalid currency code!", 400));
+    }
+    
+    // get currently login users cart
+    const sql = `SELECT products.*, cart_items.quantity FROM carts JOIN cart_items ON cart_items.cart_id = carts.id JOIN products ON products.id = cart_items.product_id WHERE user_id = ?`;
+    
+    const cart = (await db.query(sql, req.user.id))[0];
+    
+    if (!(Array.isArray(cart) && cart.length)) {
+        return next(new AppError("User has no cart that requires check out!", 404));
+    }
+      
 
-  // get currently login users cart
-  const sql = `SELECT products.*, cart_items.quantity FROM carts JOIN cart_items ON cart_items.cart_id = carts.id JOIN products ON products.id = cart_items.product_id WHERE user_id = ?`;
-
-  const cart = (await db.query(sql, req.user.id))[0];
-
-  if (!(Array.isArray(cart) && cart.length)) {
-    return next(new AppError("User has no cart that requires check out!", 404));
-  }
-
-  // create order
-  const order_id = (
-    await db.query("INSERT INTO orders SET ?", {
-      user_id: req.user.id,
-      total,
-      currency: currencyCode,
-    })
-  )[0].insertId;
 
   const getPrice = (
     code,
@@ -74,6 +178,20 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     if (code === "EUR") return priceEur;
   };
 
+  
+  const order_id = (
+    await db.query("INSERT INTO orders SET ?", {
+      user_id: req.user.id,
+      currency: currencyCode,
+      order_id: `flw-${Date.now()}`,
+      transaction_id: "flutter",
+      channel: "flutter",
+      time: Date.now(),
+      amount: total,
+      status: "Pending"
+    })
+  )[0].insertId;
+  
   // create order items
   for (let i = 0; i < cart.length; i++) {
     const {
@@ -108,21 +226,25 @@ exports.createOrder = catchAsync(async (req, res, next) => {
 
   await clearCartFn(req, next);
 
-  // GET PAYMENT LINK
-  const paymentLink = await getPaymentLink(
-    order_id,
-    total,
-    currencyCode,
-    req.user.email,
-    req.user.phone,
-    req.user.name
-  );
-
+    // GET PAYMENT LINK
+    const paymentLink = await getPaymentLink(
+      order_id,
+      total,
+      currencyCode,
+      req.user.email,
+      req.user.phone,
+      req.user.name
+    );
+  
+  console.log("order_id", order_id);
   res.status(200).json({
     status: "success",
     message: "Order submitted successfully!",
     paymentLink: paymentLink.data.link,
   });
+
+  }
+
 });
 
 exports.retryPayment = catchAsync(async (req, res, next) => {

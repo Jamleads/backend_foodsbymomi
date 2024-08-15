@@ -95,15 +95,30 @@ CREATE TABLE advert_messages (
 	created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- CREATE TABLE orders (
+--     id INT AUTO_INCREMENT PRIMARY KEY,
+--     user_id INT NOT NULL,
+--     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     status ENUM('Pending', 'Processing', 'completed', 'Cancelled') NOT NULL DEFAULT 'pending',
+--     total DECIMAL(10, 2) NOT NULL,
+--     currency VARCHAR(16) NOT NULL,
+-- 	created_at TIMESTAMP DEFAULT NOW(),
+--     FOREIGN KEY (user_id) REFERENCES users (id)
+-- );
+
 CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('Pending', 'Processing', 'completed', 'Cancelled') NOT NULL DEFAULT 'pending',
-    total DECIMAL(10, 2) NOT NULL,
+    status ENUM('Pending', 'Processing', 'Completed', 'Cancelled') NOT NULL DEFAULT 'Processing',
     currency VARCHAR(16) NOT NULL,
-	created_at TIMESTAMP DEFAULT NOW(),
-    FOREIGN KEY (user_id) REFERENCES users (id)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    order_id VARCHAR(250) NOT NULL,
+    transaction_id VARCHAR(250) NOT NULL,
+    channel VARCHAR(150) NOT NULL,
+    time VARCHAR(200) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE order_items (
