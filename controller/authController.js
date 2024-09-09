@@ -70,6 +70,8 @@ exports.setAdminRole = (req, res, next) => {
 exports.signUp = catchAsync(async (req, res, next) => {
   const { name, email, password, passwordConfirm, role, referralCode } = req.body;
 
+  if(!name) return next(new AppError("Name is required", 400));
+
   // check if first name and last name are empty strings
   if (name.trim() === "") return next(new AppError("Name is required", 400));
 
@@ -215,32 +217,39 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   // Verify token
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  // const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); // TODO: Error spotted here;
+  await jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+    if(err) {
+      return next(new AppError(err.message, 400));
+    }else {
+      
+      // Check if user still exist
+      let user;
 
-  // Check if user still exist
-  let user;
+      user = (await db.query("SELECT * FROM users WHERE id = ?", decoded.id))[0][0];
 
-  user = (await db.query("SELECT * FROM users WHERE id = ?", decoded.id))[0][0];
+      if (!user) {
+        return next(new AppError("This user belonging to this token no longer exist", 401));
+      }
 
-  if (!user) {
-    return next(new AppError("This user belonging to this token no longer exist", 401));
-  }
+      // Check user's active status
+      if (user.active === "false") {
+        return next(new AppError("This User is deactivated", 404));
+      }
 
-  // Check user's active status
-  if (user.active === "false") {
-    return next(new AppError("This User is deactivated", 404));
-  }
+      // Check if user changed password after token was issued
+      if (changedPasswordAfter(decoded.iat, user)) {
+        return next(new AppError("Password changed recently, Login again", 401));
+      }
 
-  // Check if user changed password after token was issued
-  if (changedPasswordAfter(decoded.iat, user)) {
-    return next(new AppError("Password changed recently, Login again", 401));
-  }
+      user.password = undefined;
 
-  user.password = undefined;
+      req.user = user;
 
-  req.user = user;
+      next();
+    }
+  });
 
-  next();
 });
 
 exports.restrictTo = (...roles) => {

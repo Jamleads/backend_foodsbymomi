@@ -5,7 +5,7 @@ const Factory = require("../controller/handlerFactory");
 const Cloudinary = require("../utils/cloudinary");
 
 // selected fields
-const columns = "id, name, email, role, phone, imageUrl, active";
+const columns = "id, name, email, role, phone, imageUrl, active, voucher";
 
 const filterObj = (obj, ...options) => {
   let newObj = {};

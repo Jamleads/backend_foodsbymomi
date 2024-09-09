@@ -1,3 +1,6 @@
+const db = require("../config/db");
+const { use } = require("../routes/productRoute");
+
 exports.convertCategoriesToArray = (data) => {
   let res = [];
 
@@ -34,3 +37,15 @@ exports.generateReferralCode = () => {
   }
   return code;
 };
+
+exports.earnVoucher = async (user_id, amount) => {
+  const user = (await db.query("SELECT * FROM users WHERE id = ?", user_id))[0][0];
+  if(user.referred_by != null){
+    const referredBy = (await db.query("SELECT * FROM users WHERE id = ?", user.referred_by))[0][0];
+    
+    const reward = amount/10;
+    let newVoucherBalance = referredBy.voucher+reward;
+    const referral = (await db.query("UPDATE users SET voucher = ? WHERE id = ?", [newVoucherBalance, referredBy.id]));
+  }
+  
+}

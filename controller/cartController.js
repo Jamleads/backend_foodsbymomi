@@ -105,6 +105,20 @@ exports.removeProductFromCart = catchAsync(async (req, res, next) => {
   next();
 });
 
+// exports.verifyAlertPay = async (transactionId) => {
+//   if(!transactionId) return new AppError("No transaction id detected, please add a transaction id to verify your transaction", 400);
+//   try {
+//     const res = await fetch(`https://apibox.alatpay.ng/alatpaytransaction/api/v1/transactions/${transactionId}`);
+//     if(!res.ok) return new AppError("Request error", 400);
+//     const response = await res.json();
+//     console.log(response)
+//     if(response.status !== true || response.message !== 'Success') return new AppError("Payment not successful", 400);
+//     // return true;
+//   } catch (error) {
+//     return new AppError(error.message || error, 400)
+//   }
+// }
+
 exports.clearCartFn = async (req, next) => {
   // get cart id
   const cart_id = (

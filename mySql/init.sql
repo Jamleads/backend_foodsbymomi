@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS waitlists;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS product_categorys;
+DROP TABLE IF EXISTS pay;
 
 CREATE TABLE waitlists (
 	id INT AUTO_INCREMENT PRIMARY KEY, 
@@ -31,6 +32,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL, 
     role ENUM ('superAdmin', 'admin', 'customer') NOT NULL DEFAULT 'customer', 
     active ENUM ('true', 'false') NOT NULL DEFAULT 'true',
+    voucher INT NOT NULL DEFAULT "0.00",
     imageName VARCHAR(255),
     imageUrl VARCHAR(700),
     resetToken VARCHAR(255), 
@@ -110,15 +112,21 @@ CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('Pending', 'Processing', 'Completed', 'Cancelled') NOT NULL DEFAULT 'Processing',
+    status ENUM('Pending', 'Processing', 'Completed', 'Cancelled') NOT NULL DEFAULT 'Pending',
     currency VARCHAR(16) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     order_id VARCHAR(250) NOT NULL,
     transaction_id VARCHAR(250) NOT NULL,
     channel VARCHAR(150) NOT NULL,
     time VARCHAR(200) NOT NULL,
-    amount DECIMAL(10, 2) NOT NULL,
+    total DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE pay (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    payment_id VARCHAR(255) NOT NULL,
+    user_id INT NOT NULL
 );
 
 CREATE TABLE order_items (
