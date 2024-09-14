@@ -11,6 +11,9 @@ DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS product_categorys;
 DROP TABLE IF EXISTS pay;
+-- DROP TABLE IF EXISTS voucher_orders;
+DROP TABLE IF EXISTS voucher_interest;
+DROP TABLE IF EXISTS voucher;
 
 CREATE TABLE waitlists (
 	id INT AUTO_INCREMENT PRIMARY KEY, 
@@ -20,6 +23,22 @@ CREATE TABLE waitlists (
     location VARCHAR(255) NOT NULL,
     heard_about_us ENUM("friend", "news", "socail media", "event"),
     created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE voucher (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    voucherNgn DECIMAL(10, 6) NOT NULL DEFAULT "0.00",
+    voucherUs DECIMAL(10, 6) NOT NULL DEFAULT "0.00", 
+    voucherUk DECIMAL(10, 6) NOT NULL DEFAULT "0.00",
+    voucherGhana DECIMAL(10, 6) NOT NULL DEFAULT "0.00",
+    voucherCanada DECIMAL(10, 6) NOT NULL DEFAULT "0.00",
+    voucher DECIMAL(10, 6) NOT NULL DEFAULT "0.00"
+);
+
+CREATE TABLE voucher_interest (
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+    percentage_rate DECIMAL(10, 2) NOT NULL
 );
 
 CREATE TABLE users (
@@ -32,7 +51,6 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL, 
     role ENUM ('superAdmin', 'admin', 'customer') NOT NULL DEFAULT 'customer', 
     active ENUM ('true', 'false') NOT NULL DEFAULT 'true',
-    voucher INT NOT NULL DEFAULT "0.00",
     imageName VARCHAR(255),
     imageUrl VARCHAR(700),
     resetToken VARCHAR(255), 

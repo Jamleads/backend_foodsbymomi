@@ -5,6 +5,8 @@ const {
   getOneAdvertMessage,
   deleteAdvertMessage,
   updateAdvertMessage,
+  getVoucherPercentage,
+  changeVoucherPercentage,
 } = require("../controller/advertMessageController");
 const { restrictTo, protect } = require("../controller/authController");
 
@@ -15,6 +17,7 @@ router.route("/").get(getAllAdvertMessages);
 router.use(protect);
 router.use(restrictTo("superAdmin", "admin"));
 
+router.route("/rate").get(getVoucherPercentage).post(changeVoucherPercentage);
 router
   .route("/:id")
   .get(getOneAdvertMessage)

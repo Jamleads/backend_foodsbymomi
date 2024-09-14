@@ -5,7 +5,7 @@ const Factory = require("../controller/handlerFactory");
 const Cloudinary = require("../utils/cloudinary");
 
 // selected fields
-const columns = "id, name, email, role, phone, imageUrl, active, voucher";
+const columns = "id, name, email, role, phone, imageUrl, active, referralCode, referred_by";
 
 const filterObj = (obj, ...options) => {
   let newObj = {};
@@ -84,6 +84,21 @@ exports.getUserReferrals = catchAsync(async (req, res, next) => {
       referrals,
     },
   });
+});
+
+exports.getUserVoucher = catchAsync(async (req, res,next) => {
+  const userVoucher = (await db.query("SELECT * FROM voucher WHERE id = ?", req.user.id))[0][0];
+  if(userVoucher) {
+    res.status(200).json({
+      status: "success",
+      vouchers: userVoucher
+     });
+  } else {
+    res.status(200).json({
+      status: "success",
+      message: "This user has no vouchers yet"
+     });
+  }
 });
 
 exports.getAllAdmins = catchAsync(async (req, res, next) => {

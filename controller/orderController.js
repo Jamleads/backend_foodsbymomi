@@ -162,112 +162,114 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       })
     )[0].insertId;
 
-    await earnVoucher(req.user.id, response.data.amount);
+    await earnVoucher(req.user.id, response.data.amount, response.data.currency);
     
     res.status(200).json({
       status: "success",
       message: "Order submitted successfully!",
       // paymentLink: paymentLink.data.link,
     });
-  } else if(method == "voucher"){
-    const { total, currencyCode } = response;
+  } 
+  // else if(method == "voucher"){
+  //   const { total, currencyCode } = response;
 
-    const user = (await db.query("SELECT * FROM users WHERE id = ?", req.user.id))[0][0];
-    if(user.voucher < amount) next(new AppError("Voucher credit is not enough to process your order", 400));
+  //   const user = (await db.query("SELECT * FROM users WHERE id = ?", req.user.id))[0][0];
+  //   if(user.voucher < amount) next(new AppError("Voucher credit is not enough to process your order", 400));
 
-    const currencyCodes = ["NGN", "GHS", "GBP", "USD", "CAD", "EUR"];
+  //   const currencyCodes = ["NGN", "GHS", "GBP", "USD", "CAD", "EUR"];
     
-    if (!currencyCodes.includes(currencyCode)) {
-        return next(new AppError("Invalid currency code!", 400));
-      }
+  //   if (!currencyCodes.includes(currencyCode)) {
+  //       return next(new AppError("Invalid currency code!", 400));
+  //     }
       
-      // get currently login users cart
-      const sql = `SELECT products.*, cart_items.quantity FROM carts JOIN cart_items ON cart_items.cart_id = carts.id JOIN products ON products.id = cart_items.product_id WHERE user_id = ?`;
+  //     // get currently login users cart
+  //     const sql = `SELECT products.*, cart_items.quantity FROM carts JOIN cart_items ON cart_items.cart_id = carts.id JOIN products ON products.id = cart_items.product_id WHERE user_id = ?`;
       
-      const cart = (await db.query(sql, req.user.id))[0];
+  //     const cart = (await db.query(sql, req.user.id))[0];
       
-      if (!(Array.isArray(cart) && cart.length)) {
-          return next(new AppError("User has no cart that requires check out!", 404));
-      }
+  //     if (!(Array.isArray(cart) && cart.length)) {
+  //         return next(new AppError("User has no cart that requires check out!", 404));
+  //     }
         
 
 
-    const getPrice = (
-      code,
-      priceNgn,
-      priceUs,
-      priceUk,
-      priceGhana,
-      priceCanada,
-      priceEur
-    ) => {
-      if (code === "NGN") return priceNgn;
-      if (code === "GHS") return priceGhana;
-      if (code === "GBP") return priceUk;
-      if (code === "USD") return priceUs;
-      if (code === "CAD") return priceCanada;
-      if (code === "EUR") return priceEur;
-    };
+  //   const getPrice = (
+  //     code,
+  //     priceNgn,
+  //     priceUs,
+  //     priceUk,
+  //     priceGhana,
+  //     priceCanada,
+  //     priceEur
+  //   ) => {
+  //     if (code === "NGN") return priceNgn;
+  //     if (code === "GHS") return priceGhana;
+  //     if (code === "GBP") return priceUk;
+  //     if (code === "USD") return priceUs;
+  //     if (code === "CAD") return priceCanada;
+  //     if (code === "EUR") return priceEur;
+  //   };
 
-    await clearCartFn(req, next);
-    const remainingBalance = user.voucher - amount;
-    const payment = (await db.query("UPDATE users SET voucher = ? WHERE id = ?", [remainingBalance, user.id]));
-    const order_id = (
-      await db.query("INSERT INTO orders SET ?", {
-        user_id: req.user.id,
-        currency: currencyCode,
-        order_id: `flw-${Date.now()}`,
-        transaction_id: "flutter",
-        channel: "flutter",
-        time: Date.now(),
-        total: total,
-      })
-    )[0].insertId;
+  //   await clearCartFn(req, next);
+  //   const remainingBalance = user.voucher - amount;
+  //   const payment = (await db.query("UPDATE users SET voucher = ? WHERE id = ?", [remainingBalance, user.id]));
+  //   const order_id = (
+  //     await db.query("INSERT INTO orders SET ?", {
+  //       user_id: req.user.id,
+  //       currency: currencyCode,
+  //       order_id: `flw-${Date.now()}`,
+  //       transaction_id: "flutter",
+  //       channel: "flutter",
+  //       time: Date.now(),
+  //       total: total,
+  //     })
+  //   )[0].insertId;
 
-    // console.log(order_id)
+  //   // console.log(order_id)
     
-    // create order items
-    for (let i = 0; i < cart.length; i++) {
-      const {
-        id: product_id,
-        quantity,
-        priceNgn,
-        priceUs,
-        priceUk,
-        priceGhana,
-        priceCanada,
-        priceEur,
-      } = cart[i];
+  //   // create order items
+  //   for (let i = 0; i < cart.length; i++) {
+  //     const {
+  //       id: product_id,
+  //       quantity,
+  //       priceNgn,
+  //       priceUs,
+  //       priceUk,
+  //       priceGhana,
+  //       priceCanada,
+  //       priceEur,
+  //     } = cart[i];
 
-      const price = getPrice(
-        currencyCode,
-        priceNgn,
-        priceUs,
-        priceUk,
-        priceGhana,
-        priceCanada,
-        priceEur
-      );
+  //     const price = getPrice(
+  //       currencyCode,
+  //       priceNgn,
+  //       priceUs,
+  //       priceUk,
+  //       priceGhana,
+  //       priceCanada,
+  //       priceEur
+  //     );
 
-      await db.query("INSERT INTO order_items SET ?", {
-        order_id,
-        product_id,
-        quantity,
-        price,
-        currency: currencyCode,
-      });
-    }
+  //     await db.query("INSERT INTO order_items SET ?", {
+  //       order_id,
+  //       product_id,
+  //       quantity,
+  //       price,
+  //       currency: currencyCode,
+  //     });
+  //   }
 
-      // GET PAYMENT WITH VOUCHER
+  //     // GET PAYMENT WITH VOUCHER
       
     
-    // console.log("order_id", order_id);
-    res.status(200).json({
-      status: "success",
-      message: "Order submitted successfully!",
-      paymentLink: paymentLink.data.link,
-    });
-  } else {
+  //   // console.log("order_id", order_id);
+  //   res.status(200).json({
+  //     status: "success",
+  //     message: "Order submitted successfully!",
+  //     paymentLink: paymentLink.data.link,
+  //   });
+  // } 
+  else {
     if(method != "flutterwave") return next(new AppError('The payment method specified is invalid', 400));
 
     const { total, currencyCode } = response;
@@ -558,7 +560,7 @@ exports.webhookCheckout = catchAsync(async (req, res, next) => {
 
       // ================== GABRIEL CODE STARTS ================ //
       const foundUser = (await db.query("SELECT * FROM users WHERE email = ?", payload.customer.email))[0][0];
-      await earnVoucher(foundUser.id, amount);
+      await earnVoucher(foundUser.id, amount, currency);
       // ================== GABRIEL CODE ENDS ================ //
 
       await new Email({ email: payload.customer.email }).sendPaymentSuccessfulEmail(
