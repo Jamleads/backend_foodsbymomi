@@ -29,9 +29,7 @@ exports.changeVoucherPercentage = catchAsync(async (req, res, next) => {
   if(existingRate) {
     const updateRate = (await db.query(`UPDATE voucher_interest SET percentage_rate = ${rate} WHERE id = 1`));
   } else {
-    const newRate = (await db.query("INSERT INTO voucher_interest SET ?", {
-      percentage_rate: rate
-    }))
+    const newRate = (await db.query("INSERT INTO voucher_interest SET percentage_rate = ?", rate))
   }
   res.status(200).json({
     status: "success",

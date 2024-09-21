@@ -6,6 +6,7 @@ const Email = require("../utils/email");
 const { clearCartFn } = require("./cartController");
 const { getPaymentLink } = require("../utils/flutterwave");
 const { earnVoucher } = require("../utils/general");
+let exchangeApi = process.env.EXCHANGE_GENERATION_API;
 
 const flw = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY);
 
@@ -113,8 +114,54 @@ exports.createOrder = catchAsync(async (req, res, next) => {
   //   req.user.name
   // );
 
-  const { response, method } = req.body;
-  if(!method || !response) return next(new AppError("Order cannot be created as method or payload is not provided", 400));
+  const { response, method, voucher } = req.body;
+  if (!method || !response) return next(new AppError("Order cannot be created as method or payload is not provided", 400));
+  
+  if (voucher) {
+    const { currency, amount } = voucher;
+    if (!amount) return next(new AppError("Please enter voucher amount", 400));
+    
+    const currencyCodes = ["NGN", "GHS", "GBP", "USD", "CAD"];
+    if (!currencyCodes.includes(currency)) return next(new AppError("Invalid currency code", 400));
+    
+    // Fetch the user's voucher balances
+    const userVoucher = (await db.query("SELECT * FROM voucher WHERE user_id = ?", req.user.id))[0][0];
+    if (!userVoucher) return next(new AppError("Sorry! this user does not have any voucher", 400));
+    
+    // Determine which voucher the user is trying to use (currency specific)
+    let voucherToBeUsed;
+    switch (currency) {
+      case "NGN": voucherToBeUsed = "voucherNgn"; break;
+      case "GHS": voucherToBeUsed = "voucherGhana"; break;
+      case "GBP": voucherToBeUsed = "voucherUk"; break;
+      case "USD": voucherToBeUsed = "voucherUs"; break;
+      case "CAD": voucherToBeUsed = "voucherCanada"; break;
+      default: return next(new AppError("Invalid currency", 400));
+    }
+    
+    // Check if user has enough voucher in the chosen currency
+    if (userVoucher[voucherToBeUsed] < amount) {
+      return next(new AppError("Not enough voucher", 400));
+    }
+    
+    // Calculate the percentage of voucher being used
+    const percentageUsed = amount / userVoucher[voucherToBeUsed];
+    
+    // Deduct the same percentage from all currencies
+    const updatedVoucherBalances = {
+      voucherNgn: userVoucher.voucherNgn - (userVoucher.voucherNgn * percentageUsed),
+      voucherGhana: userVoucher.voucherGhana - (userVoucher.voucherGhana * percentageUsed),
+      voucherUk: userVoucher.voucherUk - (userVoucher.voucherUk * percentageUsed),
+      voucherUs: userVoucher.voucherUs - (userVoucher.voucherUs * percentageUsed),
+      voucherCanada: userVoucher.voucherCanada - (userVoucher.voucherCanada * percentageUsed),
+      voucher: userVoucher.voucher - (userVoucher.voucher * percentageUsed),
+    };
+    
+    // Update the user's voucher balances in the database
+    await db.query("UPDATE voucher SET ? WHERE user_id = ?", [updatedVoucherBalances, req.user.id]);
+
+    // return res.send("Voucher successfully applied");
+  }
   if(method == 'alart_pay'){
     if(response.status !== true || response.data.status !== "completed") return next(new AppError("Order cannot be created as the payment failed", 400));
     
@@ -162,114 +209,14 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       })
     )[0].insertId;
 
-    await earnVoucher(req.user.id, response.data.amount, response.data.currency);
+    await earnVoucher(req.user.id, response.data.amount, response.data.currency, next);
     
     res.status(200).json({
       status: "success",
       message: "Order submitted successfully!",
       // paymentLink: paymentLink.data.link,
     });
-  } 
-  // else if(method == "voucher"){
-  //   const { total, currencyCode } = response;
-
-  //   const user = (await db.query("SELECT * FROM users WHERE id = ?", req.user.id))[0][0];
-  //   if(user.voucher < amount) next(new AppError("Voucher credit is not enough to process your order", 400));
-
-  //   const currencyCodes = ["NGN", "GHS", "GBP", "USD", "CAD", "EUR"];
-    
-  //   if (!currencyCodes.includes(currencyCode)) {
-  //       return next(new AppError("Invalid currency code!", 400));
-  //     }
-      
-  //     // get currently login users cart
-  //     const sql = `SELECT products.*, cart_items.quantity FROM carts JOIN cart_items ON cart_items.cart_id = carts.id JOIN products ON products.id = cart_items.product_id WHERE user_id = ?`;
-      
-  //     const cart = (await db.query(sql, req.user.id))[0];
-      
-  //     if (!(Array.isArray(cart) && cart.length)) {
-  //         return next(new AppError("User has no cart that requires check out!", 404));
-  //     }
-        
-
-
-  //   const getPrice = (
-  //     code,
-  //     priceNgn,
-  //     priceUs,
-  //     priceUk,
-  //     priceGhana,
-  //     priceCanada,
-  //     priceEur
-  //   ) => {
-  //     if (code === "NGN") return priceNgn;
-  //     if (code === "GHS") return priceGhana;
-  //     if (code === "GBP") return priceUk;
-  //     if (code === "USD") return priceUs;
-  //     if (code === "CAD") return priceCanada;
-  //     if (code === "EUR") return priceEur;
-  //   };
-
-  //   await clearCartFn(req, next);
-  //   const remainingBalance = user.voucher - amount;
-  //   const payment = (await db.query("UPDATE users SET voucher = ? WHERE id = ?", [remainingBalance, user.id]));
-  //   const order_id = (
-  //     await db.query("INSERT INTO orders SET ?", {
-  //       user_id: req.user.id,
-  //       currency: currencyCode,
-  //       order_id: `flw-${Date.now()}`,
-  //       transaction_id: "flutter",
-  //       channel: "flutter",
-  //       time: Date.now(),
-  //       total: total,
-  //     })
-  //   )[0].insertId;
-
-  //   // console.log(order_id)
-    
-  //   // create order items
-  //   for (let i = 0; i < cart.length; i++) {
-  //     const {
-  //       id: product_id,
-  //       quantity,
-  //       priceNgn,
-  //       priceUs,
-  //       priceUk,
-  //       priceGhana,
-  //       priceCanada,
-  //       priceEur,
-  //     } = cart[i];
-
-  //     const price = getPrice(
-  //       currencyCode,
-  //       priceNgn,
-  //       priceUs,
-  //       priceUk,
-  //       priceGhana,
-  //       priceCanada,
-  //       priceEur
-  //     );
-
-  //     await db.query("INSERT INTO order_items SET ?", {
-  //       order_id,
-  //       product_id,
-  //       quantity,
-  //       price,
-  //       currency: currencyCode,
-  //     });
-  //   }
-
-  //     // GET PAYMENT WITH VOUCHER
-      
-    
-  //   // console.log("order_id", order_id);
-  //   res.status(200).json({
-  //     status: "success",
-  //     message: "Order submitted successfully!",
-  //     paymentLink: paymentLink.data.link,
-  //   });
-  // } 
-  else {
+  } else {
     if(method != "flutterwave") return next(new AppError('The payment method specified is invalid', 400));
 
     const { total, currencyCode } = response;
@@ -409,10 +356,11 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       currencyCode,
       req.user.email,
       req.user.phone,
-      req.user.name
+      req.user.name,
+      next
     );
   
-  console.log("order_id", order_id);
+  // console.log("order_id", paymentLink);
   res.status(200).json({
     status: "success",
     message: "Order submitted successfully!",
@@ -560,7 +508,7 @@ exports.webhookCheckout = catchAsync(async (req, res, next) => {
 
       // ================== GABRIEL CODE STARTS ================ //
       const foundUser = (await db.query("SELECT * FROM users WHERE email = ?", payload.customer.email))[0][0];
-      await earnVoucher(foundUser.id, amount, currency);
+      await earnVoucher(foundUser.id, amount, currency, next);
       // ================== GABRIEL CODE ENDS ================ //
 
       await new Email({ email: payload.customer.email }).sendPaymentSuccessfulEmail(

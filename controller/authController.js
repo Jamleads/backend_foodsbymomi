@@ -190,7 +190,7 @@ exports.login = catchAsync(async (req, res, next) => {
   // Check if user exist and password is correct
   const user = (
     await db.query(
-      "SELECT id, name, email, role, phone, imageUrl, password, referralCode FROM users WHERE email = ?",
+      "SELECT id, name, email, role, phone, imageUrl, password, referralCode, referred_by FROM users WHERE email = ?",
       email
     )
   )[0][0];
@@ -205,12 +205,15 @@ exports.login = catchAsync(async (req, res, next) => {
 exports.protect = catchAsync(async (req, res, next) => {
   // Get token
   let token;
-
+  
   if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
     token = req.headers.authorization.split(" ")[1];
-  } else if (req.cookies.jwt) {
-    token = req.cookies.jwt;
+  // } else if (req.cookies.jwt) {
+  //   token = req.cookies.jwt;
+  } else {
+    return next(new AppError("No token provided, access denied", 400));
   }
+  console.log("Odebee")
 
   if (!token) {
     return next(new AppError("You are not logged in, please log in to get access!", 401));

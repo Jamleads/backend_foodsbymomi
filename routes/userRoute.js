@@ -9,6 +9,7 @@ const {
   updateUser,
   getUserReferrals,
   getUserVoucher,
+  allVoucher,
 } = require("../controller/userController");
 const orderRoutes = require("../routes/orderRoutes");
 const multerAndSharp = require("../utils/multerAndSharp");
@@ -30,6 +31,7 @@ router.delete("/delete-me", deleteMe);
 
 router.route("/me/referrals").get(getUserReferrals);
 router.route("/voucher").get(getUserVoucher);
+// router.route("/voucher/all").get(allVoucher);
 
 //restrict to only admin
 router.use(restrictTo("admin", "superAdmin"));

@@ -40,7 +40,7 @@ exports.generateReferralCode = () => {
   return code;
 };
 
-exports.earnVoucher = async (user_id, amount, currency) => {
+exports.earnVoucher = async (user_id, amount, currency, next) => {
   const user = (await db.query("SELECT * FROM users WHERE id = ?", user_id))[0][0];
   if(user.referred_by != null){
     const referredBy = (await db.query("SELECT * FROM users WHERE id = ?", user.referred_by))[0][0];
@@ -75,8 +75,8 @@ exports.earnVoucher = async (user_id, amount, currency) => {
     //   voucherCurrency = "voucherCanada"
     // }
 
-    const referralPercentage = (await db.query("SELECT percentage_rate FROM voucher_interest WHERE id = 1"))[0][0];
-    if(!referralPercentage) return new AppError("Error, try to reward, please reach out to support", 400);
+    const referralPercentage = (await db.query("SELECT percentage_rate FROM voucher_interest WHERE id=1"))[0][0];
+    if(!referralPercentage) return next(new AppError("Error, try to reward, please reach out to support", 400));
     
     const reward = amount/referralPercentage.percentage_rate;
 
@@ -89,7 +89,7 @@ exports.earnVoucher = async (user_id, amount, currency) => {
       let rewardGHS = voucherGhana*reward;
       let rewardGBP = voucherUk*reward;
       let rewardUSD = voucherUs*reward;
-      let rewardCAD = voucherCanada+reward;
+      let rewardCAD = voucherCanada*reward;
 
       const updatedVoucher = (await db.query(`UPDATE voucher SET ? WHERE user_id = ?`, [{
         voucherCanada: Number(userVoucher.voucherCanada)+Number(rewardCAD),
@@ -122,3 +122,4 @@ exports.earnVoucher = async (user_id, amount, currency) => {
   }
   
 }
+

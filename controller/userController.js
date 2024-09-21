@@ -86,8 +86,9 @@ exports.getUserReferrals = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getUserVoucher = catchAsync(async (req, res,next) => {
-  const userVoucher = (await db.query("SELECT * FROM voucher WHERE id = ?", req.user.id))[0][0];
+exports.getUserVoucher = catchAsync(async (req, res, next) => {
+  // console.log(req.user);
+  const userVoucher = (await db.query("SELECT * FROM voucher WHERE user_id = ?", req.user.id))[0][0];
   if(userVoucher) {
     res.status(200).json({
       status: "success",
@@ -99,6 +100,23 @@ exports.getUserVoucher = catchAsync(async (req, res,next) => {
       message: "This user has no vouchers yet"
      });
   }
+});
+
+exports.allVoucher = catchAsync(async (req, res, next) => {
+  // console.log(req.user);
+  const userVoucher = (await db.query("SELECT * FROM voucher WHERE user_id = ?", req.user.id))[0];
+  console.log(userVoucher)
+  // if(userVoucher) {
+  //   res.status(200).json({
+  //     status: "success",
+  //     vouchers: userVoucher
+  //    });
+  // } else {
+  //   res.status(200).json({
+  //     status: "success",
+  //     message: "This user has no vouchers yet"
+  //    });
+  // }
 });
 
 exports.getAllAdmins = catchAsync(async (req, res, next) => {

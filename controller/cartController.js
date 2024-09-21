@@ -40,7 +40,7 @@ exports.addToCart = catchAsync(async (req, res, next) => {
     await db.query("INSERT INTO cart_items SET ?", { cart_Id, product_id, quantity });
   } else {
     const newQuantity = result.quantity + quantity;
-    console.log({ newQuantity });
+    // console.log({ newQuantity });
 
     await db.query("UPDATE cart_items SET ? WHERE cart_id = ? AND product_id = ?", [
       { quantity: newQuantity },
