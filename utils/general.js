@@ -41,85 +41,54 @@ exports.generateReferralCode = () => {
 };
 
 exports.earnVoucher = async (user_id, amount, currency, next) => {
-  const user = (await db.query("SELECT * FROM users WHERE id = ?", user_id))[0][0];
-  if(user.referred_by != null){
-    const referredBy = (await db.query("SELECT * FROM users WHERE id = ?", user.referred_by))[0][0];
-    const voucherFetcher = await fetch(`https://v6.exchangerate-api.com/v6/${exchangeApi}/latest/${currency}`);
-    const response = await voucherFetcher.json();
-    if(!voucherFetcher.ok) return next(new AppError("Rate convertion failed", 400));
-    let voucherNgn = response.conversion_rates.NGN;
-    let voucherCanada = response.conversion_rates.CAD;
-    let voucherGhana = response.conversion_rates.GHS;
-    let voucherUk = response.conversion_rates.GBP;
-    let voucherUs = response.conversion_rates.USD;
-    
-    // let voucherCurrency;
-    
-    // if(currency == "NGN"){
-    //   voucherCurrency = "voucherNgn"
-    // }
+  try {
+    const user = (await db.query("SELECT * FROM users WHERE id = ?", [user_id]))[0][0];
+    if (!user) return next(new AppError("User not found", 404));
 
-    // if(currency == "GHS"){
-    //   voucherCurrency = "voucherGhana"
-    // }
+    if (user.referred_by != null) {
+      const referredBy = (await db.query("SELECT * FROM users WHERE id = ?", [user.referred_by]))[0][0];
+      if (!referredBy) return next(new AppError("Referred user not found", 404));
 
-    // if(currency == "GBP"){
-    //   voucherCurrency = "voucherUk"
-    // }
+      const voucherFetcher = await fetch(`https://v6.exchangerate-api.com/v6/${exchangeApi}/latest/${currency}`);
+      if (!voucherFetcher.ok) return next(new AppError("Rate conversion failed", 400));
 
-    // if(currency == "USD"){
-    //   voucherCurrency = "voucherUs"
-    // }
+      const response = await voucherFetcher.json();
+      const conversionRates = response.conversion_rates;
+      if (!conversionRates) return next(new AppError("Conversion rates not found", 400));
 
-    // if(currency == "CAD"){
-    //   voucherCurrency = "voucherCanada"
-    // }
+      const referralPercentage = (await db.query("SELECT percentage_rate FROM voucher_interest WHERE id=1"))[0][0];
+      if (!referralPercentage) return next(new AppError("Error retrieving referral percentage", 400));
 
-    const referralPercentage = (await db.query("SELECT percentage_rate FROM voucher_interest WHERE id=1"))[0][0];
-    if(!referralPercentage) return next(new AppError("Error, try to reward, please reach out to support", 400));
-    
-    const reward = amount/referralPercentage.percentage_rate;
+      const reward = amount / referralPercentage.percentage_rate;
 
-    // ============ REWARDING VOUCHER ====================== //
-    const userVoucher = (await db.query("SELECT * FROM voucher WHERE user_id = ?", referredBy.id))[0][0];
-    if(userVoucher){
-      // let rewardAmount = userVoucher[voucherCurrency]+=reward;
+      const userVoucher = (await db.query("SELECT * FROM voucher WHERE user_id = ?", [referredBy.id]))[0][0];
+      const voucherData = {
+        voucherCanada: conversionRates.CAD * reward,
+        voucherGhana: conversionRates.GHS * reward,
+        voucherNgn: conversionRates.NGN * reward,
+        voucherUs: conversionRates.USD * reward,
+        voucherUk: conversionRates.GBP * reward,
+        voucher: conversionRates.USD * reward
+      };
 
-      let rewardNGN = voucherNgn*reward;
-      let rewardGHS = voucherGhana*reward;
-      let rewardGBP = voucherUk*reward;
-      let rewardUSD = voucherUs*reward;
-      let rewardCAD = voucherCanada*reward;
-
-      const updatedVoucher = (await db.query(`UPDATE voucher SET ? WHERE user_id = ?`, [{
-        voucherCanada: Number(userVoucher.voucherCanada)+Number(rewardCAD),
-        voucherGhana: Number(userVoucher.voucherGhana)+Number(rewardGHS),
-        voucherNgn: Number(userVoucher.voucherNgn)+Number(rewardNGN),
-        voucherUs: Number(userVoucher.voucherUs)+Number(rewardUSD),
-        voucherUk: Number(userVoucher.voucherUk)+Number(rewardGBP),
-        voucher: Number(userVoucher.voucher)+Number(rewardUSD)
-      }, referredBy.id]));
-
-      console.log("updatedVoucher", updatedVoucher);
-    } else {
-      // ========= CREATE USER VOUCHER ============ //
-      const createNewVoucher = (await db.query("INSERT INTO voucher SET ?", {
-        user_id: referredBy.id,
-        voucherNgn: voucherNgn*reward,
-        voucherUs: voucherUs*reward,
-        voucherUk: voucherUk*reward,
-        voucherGhana: voucherGhana*reward,
-        voucherCanada: voucherCanada*reward,
-        voucher: voucherUs*reward
-      }));
-
-      // ========== UPDATE CREATED VOUCHER =========== //
-      // const newVoucher = (await db.query(`UPDATE voucher SET ${voucherCurrency} = ${reward} WHERE user_id = ${referredBy.id}`));
-      // console.log("newVoucher", newVoucher)
+      if (userVoucher) {
+        await db.query("UPDATE voucher SET ? WHERE user_id = ?", [{
+          voucherCanada: Number(userVoucher.voucherCanada) + voucherData.voucherCanada,
+          voucherGhana: Number(userVoucher.voucherGhana) + voucherData.voucherGhana,
+          voucherNgn: Number(userVoucher.voucherNgn) + voucherData.voucherNgn,
+          voucherUs: Number(userVoucher.voucherUs) + voucherData.voucherUs,
+          voucherUk: Number(userVoucher.voucherUk) + voucherData.voucherUk,
+          voucher: Number(userVoucher.voucher) + voucherData.voucher
+        }, referredBy.id]);
+      } else {
+        await db.query("INSERT INTO voucher SET ?", {
+          user_id: referredBy.id,
+          ...voucherData
+        });
+      }
     }
-    // let newVoucherBalance = referredBy.voucher+reward;
-    // const referral = (await db.query("UPDATE users SET voucher = ? WHERE id = ?", [newVoucherBalance, referredBy.id]));
+  } catch (error) {
+    return next(new AppError("An error occurred while processing the voucher", 500));
   }
-  
-}
+};
 

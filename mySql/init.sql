@@ -89,13 +89,13 @@ CREATE TABLE carts (
 );
 
 CREATE TABLE cart_items (
-id INT AUTO_INCREMENT PRIMARY KEY,
-cart_id INT NOT NULL,
-product_id INT NULL,
-quantity INT DEFAULT 1,
-created_at TIMESTAMP DEFAULT NOW(),
-FOREIGN KEY (cart_id) REFERENCES carts (id) ON DELETE CASCADE,
-FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cart_id INT NOT NULL,
+    product_id INT NULL,
+    quantity INT DEFAULT 1,
+    created_at TIMESTAMP DEFAULT NOW(),
+    FOREIGN KEY (cart_id) REFERENCES carts (id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
 );
 
 CREATE TABLE favorites (
@@ -180,4 +180,9 @@ CREATE TABLE product_categorys (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE
 );
+
+
+
+-- ogunyemiadetunji17@gmail.com
+-- Adetunji@Examfeed$12#!
 

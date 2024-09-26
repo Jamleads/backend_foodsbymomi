@@ -222,8 +222,10 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     const { total, currencyCode } = response;
 
     const currencyCodes = ["NGN", "GHS", "GBP", "USD", "CAD", "EUR"];
+
+    if(!total) return next(new AppError("Total price not passed!", 400));
   
-  if (!currencyCodes.includes(currencyCode)) {
+    if (!currencyCodes.includes(currencyCode)) {
       return next(new AppError("Invalid currency code!", 400));
     }
     
@@ -508,6 +510,7 @@ exports.webhookCheckout = catchAsync(async (req, res, next) => {
 
       // ================== GABRIEL CODE STARTS ================ //
       const foundUser = (await db.query("SELECT * FROM users WHERE email = ?", payload.customer.email))[0][0];
+      // const foundUser = (await db.query("SELECT * FROM orders WHERE id = ?", order_id))[0][0];
       await earnVoucher(foundUser.id, amount, currency, next);
       // ================== GABRIEL CODE ENDS ================ //
 

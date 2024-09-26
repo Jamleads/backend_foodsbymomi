@@ -213,7 +213,6 @@ exports.protect = catchAsync(async (req, res, next) => {
   } else {
     return next(new AppError("No token provided, access denied", 400));
   }
-  console.log("Odebee")
 
   if (!token) {
     return next(new AppError("You are not logged in, please log in to get access!", 401));
