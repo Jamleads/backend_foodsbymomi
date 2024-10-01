@@ -34,85 +34,6 @@ const updatePayment = async (order_id, status, currency, amount) => {
 // body: "response": responseApi
 
 exports.createOrder = catchAsync(async (req, res, next) => {
-  // total amount
-  // const { total, currencyCode } = req.body;
-  
-  // const currencyCodes = ["NGN", "GHS", "GBP", "USD", "CAD", "EUR"];
-  
-  // if (!currencyCodes.includes(currencyCode)) {
-    //   return next(new AppError("Invalid currency code!", 400));
-    // }
-    
-    // get currently login users cart
-    // const sql = `SELECT products.*, cart_items.quantity FROM carts JOIN cart_items ON cart_items.cart_id = carts.id JOIN products ON products.id = cart_items.product_id WHERE user_id = ?`;
-    
-    // const cart = (await db.query(sql, req.user.id))[0];
-    
-    // if (!(Array.isArray(cart) && cart.length)) {
-      //   return next(new AppError("User has no cart that requires check out!", 404));
-    // }
-      
-
-
-  // const getPrice = (
-  //   code,
-  //   priceNgn,
-  //   priceUs,
-  //   priceUk,
-  //   priceGhana,
-  //   priceCanada,
-  //   priceEur
-  // ) => {
-  //   if (code === "NGN") return priceNgn;
-  //   if (code === "GHS") return priceGhana;
-  //   if (code === "GBP") return priceUk;
-  //   if (code === "USD") return priceUs;
-  //   if (code === "CAD") return priceCanada;
-  //   if (code === "EUR") return priceEur;
-  // };
-
-  // create order items
-  // for (let i = 0; i < cart.length; i++) {
-  //   const {
-  //     id: product_id,
-  //     quantity,
-  //     priceNgn,
-  //     priceUs,
-  //     priceUk,
-  //     priceGhana,
-  //     priceCanada,
-  //     priceEur,
-  //   } = cart[i];
-
-  //   const price = getPrice(
-  //     currencyCode,
-  //     priceNgn,
-  //     priceUs,
-  //     priceUk,
-  //     priceGhana,
-  //     priceCanada,
-  //     priceEur
-  //   );
-
-  //   await db.query("INSERT INTO order_items SET ?", {
-  //     order_id,
-  //     product_id,
-  //     quantity,
-  //     price,
-  //     currency: currencyCode,
-  //   });
-  // }
-
-  
-  // GET PAYMENT LINK
-  // const paymentLink = await getPaymentLink(
-  //   order_id,
-  //   total,
-  //   currencyCode,
-  //   req.user.email,
-  //   req.user.phone,
-  //   req.user.name
-  // );
 
   const { response, method, voucher } = req.body;
   if (!method || !response) return next(new AppError("Order cannot be created as method or payload is not provided", 400));
@@ -256,52 +177,6 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     if (code === "CAD") return priceCanada;
     if (code === "EUR") return priceEur;
   };
-
-  
-  // const order_id = (
-  //   await db.query("INSERT INTO orders SET ?", { 
-  //     user_id: req.user.id,
-  //     currency: currencyCode,
-  //     order_id: `flw-${Date.now()}`,
-  //     transaction_id: "flutter",
-  //     channel: "flutter",
-  //     time: Date.now(),
-  //     amount: total,
-  //     status: "Pending"
-  //   })
-  // )[0].insertId;
-  
-  // // create order items
-  // for (let i = 0; i < cart.length; i++) {
-  //   const {
-  //     id: product_id,
-  //     quantity,
-  //     priceNgn,
-  //     priceUs,
-  //     priceUk,
-  //     priceGhana,
-  //     priceCanada,
-  //     priceEur,
-  //   } = cart[i];
-
-  //   const price = getPrice(
-  //     currencyCode,
-  //     priceNgn,
-  //     priceUs,
-  //     priceUk,
-  //     priceGhana,
-  //     priceCanada,
-  //     priceEur
-  //   );
-
-  //   await db.query("INSERT INTO order_items SET ?", {
-  //     order_id,
-  //     product_id,
-  //     quantity,
-  //     price,
-  //     currency: currencyCode,
-  //   });
-  // }
 
   await clearCartFn(req, next);
 
@@ -509,9 +384,18 @@ exports.webhookCheckout = catchAsync(async (req, res, next) => {
       await updatePayment(order_id, "Completed", currency, amount);
 
       // ================== GABRIEL CODE STARTS ================ //
-      const foundUser = (await db.query("SELECT * FROM users WHERE email = ?", payload.customer.email))[0][0];
-      // const foundUser = (await db.query("SELECT * FROM orders WHERE id = ?", order_id))[0][0];
-      await earnVoucher(foundUser.id, amount, currency, next);
+      const userResult = await db.query("SELECT id FROM users WHERE email = ?", [payload.customer.email]);
+
+      // Check if user exists
+      const user = userResult[0]; // MariaDB returns a flat array
+
+      if (!user) {
+        return next(new AppError("User not found", 404));
+      }
+
+      // Call earnVoucher function
+      await earnVoucher(user.id, amount, currency, next);
+
       // ================== GABRIEL CODE ENDS ================ //
 
       await new Email({ email: payload.customer.email }).sendPaymentSuccessfulEmail(
