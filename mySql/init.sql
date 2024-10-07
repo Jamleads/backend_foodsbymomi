@@ -14,6 +14,8 @@ DROP TABLE IF EXISTS pay;
 -- DROP TABLE IF EXISTS voucher_orders;
 DROP TABLE IF EXISTS voucher_interest;
 DROP TABLE IF EXISTS voucher;
+DROP TABLE IF EXISTS discount_code;
+DROP TABLE IF EXISTS referral_rewards_percentage;
 
 CREATE TABLE waitlists (
 	id INT AUTO_INCREMENT PRIMARY KEY, 
@@ -173,6 +175,22 @@ CREATE TABLE referrals (
     id INT AUTO_INCREMENT PRIMARY KEY,
     referrer_id INT NOT NULL,
     referee_id INT NOT NULL,
+	created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE discount_code (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(64) UNIQUE,
+    percentage_discounted DECIMAL(10, 2) NOT NULL,
+    number_of_times_to_be_use INT NOT NULL,
+    number_of_times_used INT DEFAULT 0,
+    status ENUM('Ongoing', 'Completed') NOT NULL,
+	created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE referral_rewards_percentage (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    percentage_to_earn DECIMAL(10, 2) DEFAULT 0,
 	created_at TIMESTAMP DEFAULT NOW()
 );
 

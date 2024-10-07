@@ -21,11 +21,19 @@ router.use(restrictTo("admin", "superAdmin"));
 
 router
   .route("/create")
-  .post(multerAndSharp.uploadUserPhoto, multerAndSharp.resizeUserPhoto, createProduct);
+  .post(
+    multerAndSharp.uploadUserPhoto,
+    multerAndSharp.resizeUserPhoto,
+    createProduct
+  );
 
 router
   .route("/:id")
   .delete(deleteProduct)
-  .put(multerAndSharp.uploadUserPhoto, multerAndSharp.resizeUserPhoto, updateProduct);
+  .put(
+    multerAndSharp.uploadUserPhoto,
+    multerAndSharp.resizeUserPhoto,
+    updateProduct
+  );
 
 module.exports = router;

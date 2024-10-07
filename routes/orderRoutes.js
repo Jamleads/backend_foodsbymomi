@@ -11,7 +11,7 @@ const {
 
 const router = express.Router({ mergeParams: true });
 
-//protect route
+// protect route
 router.use(protect);
 
 router.route("/check-out").post(createOrder);

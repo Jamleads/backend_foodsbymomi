@@ -25,5 +25,4 @@ router
   .put(updateAdvertMessage);
 
 router.route("/create").post(createAdvertMessage);
-
 module.exports = router;

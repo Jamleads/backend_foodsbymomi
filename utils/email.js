@@ -4,6 +4,7 @@ const pug = require("pug");
 module.exports = class Email {
   constructor(user, url) {
     this.to = user.email;
+    console.log(this.to);
     this.url = url;
     this.name = user.name;
     this.from = `Foodsbymomi <${process.env.EMAIL_FROM}>`;
@@ -24,6 +25,9 @@ module.exports = class Email {
 
     return nodemailer.createTransport({
       pool: true,
+      secure: true,
+      logger: true, // Enable logging
+      debug: true, // Enable debug output
       host: process.env.TEST_EMAIL_HOST,
       port: process.env.TEST_EMAIL_PORT,
       auth: {
@@ -35,26 +39,36 @@ module.exports = class Email {
 
   // send actual email
   async send(template, subject, message, amount) {
-    // render html based on a pug template
-    const html = pug.renderFile(`${__dirname}/../views/mail/${template}.pug`, {
-      url: this.url,
-      title: this.title,
-      message: message,
-      name: this.name,
-      amount,
-      subject,
-    });
+    try {
+      // render html based on a pug template
+      const html = pug.renderFile(
+        `${__dirname}/../views/mail/${template}.pug`,
+        {
+          url: this.url,
+          title: this.title,
+          message: message,
+          name: this.name,
+          amount,
+          subject,
+        }
+      );
 
-    //define email options
-    const mailOptions = {
-      from: this.from,
-      to: this.to,
-      subject,
-      html,
-    };
-
-    // create a transport and send email
-    await this.newTransport().sendMail(mailOptions);
+      //define email options
+      const mailOptions = {
+        from: this.from,
+        to: this.to,
+        subject,
+        html,
+      };
+      // create a transport and send email
+      try {
+        await this.newTransport().sendMail(mailOptions);
+      } catch (error) {
+        console.log(error);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async sendWelcome() {
@@ -69,7 +83,11 @@ module.exports = class Email {
   }
 
   async sendEmailToWaitlist(message) {
-    await this.send("waitlist-email", "Good News for Waitlist Members!", message);
+    await this.send(
+      "waitlist-email",
+      "Good News for Waitlist Members!",
+      message
+    );
   }
 
   async sendPaymentFailureEmail(amount) {
@@ -78,5 +96,24 @@ module.exports = class Email {
 
   async sendPaymentSuccessfulEmail(amount) {
     await this.send("payment-success", "Payment Successful!", null, amount);
+  }
+  async sendOrderCreateSuccessfully(amount) {
+    try {
+      await this.send("order-success", "Order Successful!", null, amount);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  async incomingOrder() {
+    try {
+      await this.send(
+        "incoming-order",
+        "Incoming Order",
+        "You have an incoming order.",
+        null
+      );
+    } catch (e) {
+      console.log(e);
+    }
   }
 };

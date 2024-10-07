@@ -61,7 +61,10 @@ exports.createOne = (table) => {
     const [row] = await db.query(sql, data);
 
     // Get newly inserted row
-    let [result] = await db.query(`SELECT * FROM ${table} WHERE id = ?`, row.insertId);
+    let [result] = await db.query(
+      `SELECT * FROM ${table} WHERE id = ?`,
+      row.insertId
+    );
 
     if (table === "products") {
       result = convertCategoriesToArray(result);
@@ -104,7 +107,9 @@ exports.getOne = (table, filteredColumns) => {
 
     // Throw error if row is an empty array
     if (!(Array.isArray(row) && row.length)) {
-      return next(new AppError(`No ${table.slice(0, -1)} found with that id`, 404));
+      return next(
+        new AppError(`No ${table.slice(0, -1)} found with that id`, 404)
+      );
     }
 
     // convert categories to an array
@@ -119,7 +124,9 @@ exports.getOne = (table, filteredColumns) => {
 exports.updateOne = (table, filteredColumns, data) => {
   return catchAsync(async (req, res, next) => {
     const sql = `UPDATE ${table} SET ? WHERE id = ?`;
-    let update = data ? formatReqBody(data, table) : formatReqBody(req.body, table);
+    let update = data
+      ? formatReqBody(data, table)
+      : formatReqBody(req.body, table);
     const id = req.params.id;
     const columns = filteredColumns ? filteredColumns : "*";
 
@@ -153,7 +160,9 @@ exports.updateOne = (table, filteredColumns, data) => {
 
     // Throw error if result is an empty array
     if (!(Array.isArray(result) && result.length)) {
-      return next(new AppError(`No ${table.slice(0, -1)} found with that id`, 404));
+      return next(
+        new AppError(`No ${table.slice(0, -1)} found with that id`, 404)
+      );
     }
 
     if (table === "products") {

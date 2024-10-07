@@ -14,6 +14,7 @@ const userRoute = require("./routes/userRoute");
 const cartRoute = require("./routes/cartRoute");
 const orderRoute = require("./routes/orderRoutes");
 const productCategoryRoute = require("./routes/productCategoryRoute");
+const discountCodesRoute = require("./routes/discountCodesRoute");
 const orderController = require("./controller/orderController");
 
 const app = express();
@@ -57,8 +58,8 @@ app.use(cookieParser());
 
 //Routes
 app.get("/", (req, res, next) => res.send("Welcome to foodsmymomi api"));
-app.use("/api/v1/product", productRoute);
 app.use("/api/v1/wait-list", waitlistRoute);
+app.use("/api/v1/product", productRoute);
 app.use("/api/v1/advert-message", advertMessageRoute);
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/user", userRoute);
@@ -66,6 +67,7 @@ app.use("/api/v1/user", userRoute);
 app.use("/api/v1/cart", cartRoute);
 app.use("/api/v1/order", orderRoute);
 app.use("/api/v1/product-category", productCategoryRoute);
+app.use("/api/v1/discount", discountCodesRoute);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

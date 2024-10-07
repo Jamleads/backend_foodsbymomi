@@ -37,7 +37,8 @@ const createSendToken = (user, statusCode, res, req) => {
 
 const changedPasswordAfter = (JWTTimestamp, user) => {
   if (user.passwordChangedAt) {
-    const changedPasswordTimestamp = new Date(user.passwordChangedAt).getTime() / 1000;
+    const changedPasswordTimestamp =
+      new Date(user.passwordChangedAt).getTime() / 1000;
 
     return JWTTimestamp < changedPasswordTimestamp;
   }
@@ -52,7 +53,10 @@ const comparePassword = (currentPassword, user) => {
 const createPasswordResetToken = () => {
   const resetToken = crypto.randomBytes(32).toString("hex");
 
-  const passwordResetToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+  const passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
 
   const passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -68,9 +72,9 @@ exports.setAdminRole = (req, res, next) => {
 };
 
 exports.signUp = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm, role, referralCode } = req.body;
+  const { name, email, password, passwordConfirm, referralCode } = req.body;
 
-  if(!name) return next(new AppError("Name is required", 400));
+  if (!name) return next(new AppError("Name is required", 400));
 
   // check if first name and last name are empty strings
   if (name.trim() === "") return next(new AppError("Name is required", 400));
@@ -81,7 +85,9 @@ exports.signUp = catchAsync(async (req, res, next) => {
   }
 
   // Check if email is already in use
-  const result = (await db.query(`SELECT email FROM users WHERE email = ?`, email))[0];
+  const result = (
+    await db.query(`SELECT email FROM users WHERE email = ?`, email)
+  )[0];
 
   if (Array.isArray(result) && result.length) {
     return next(new AppError("Email is already in use!", 400));
@@ -89,12 +95,16 @@ exports.signUp = catchAsync(async (req, res, next) => {
 
   // Check if password is equal to confirm password
   if (password !== passwordConfirm) {
-    return next(new AppError("Password and confirm password are not the same.", 400));
+    return next(
+      new AppError("Password and confirm password are not the same.", 400)
+    );
   }
 
   // Check if password is up to 8 characters
   if (!password || password.length < 8) {
-    return next(new AppError("Please enter a password with at least 8 characters", 400));
+    return next(
+      new AppError("Please enter a password with at least 8 characters", 400)
+    );
   }
 
   //   Hash password
@@ -121,7 +131,10 @@ exports.signUp = catchAsync(async (req, res, next) => {
 
   if (referralCode) {
     referrersId = (
-      await db.query("SELECT id FROM users WHERE referralCode = ?", referralCode)
+      await db.query(
+        "SELECT id FROM users WHERE referralCode = ?",
+        referralCode
+      )
     )[0][0]?.id;
   }
 
@@ -139,7 +152,6 @@ exports.signUp = catchAsync(async (req, res, next) => {
     name,
     email,
     password: hashedPassword,
-    role,
   };
 
   const data = role === "admin" ? dataAdmin : dataCustomer;
@@ -184,7 +196,9 @@ exports.login = catchAsync(async (req, res, next) => {
 
   // Check if email and password is provided
   if (!email || !password) {
-    return next(new AppError("Please provide a valid email and password!", 400));
+    return next(
+      new AppError("Please provide a valid email and password!", 400)
+    );
   }
 
   // Check if user exist and password is correct
@@ -205,33 +219,41 @@ exports.login = catchAsync(async (req, res, next) => {
 exports.protect = catchAsync(async (req, res, next) => {
   // Get token
   let token;
-  
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
     token = req.headers.authorization.split(" ")[1];
-  // } else if (req.cookies.jwt) {
-  //   token = req.cookies.jwt;
+    // } else if (req.cookies.jwt) {
+    //   token = req.cookies.jwt;
   } else {
     return next(new AppError("No token provided, access denied", 400));
   }
 
   if (!token) {
-    return next(new AppError("You are not logged in, please log in to get access!", 401));
+    return next(
+      new AppError("You are not logged in, please log in to get access!", 401)
+    );
   }
 
   // Verify token
   // const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); // TODO: Error spotted here;
   await jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
-    if(err) {
+    if (err) {
       return next(new AppError(err.message, 400));
-    }else {
-      
+    } else {
       // Check if user still exist
       let user;
 
-      user = (await db.query("SELECT * FROM users WHERE id = ?", decoded.id))[0][0];
+      user = (
+        await db.query("SELECT * FROM users WHERE id = ?", decoded.id)
+      )[0][0];
 
       if (!user) {
-        return next(new AppError("This user belonging to this token no longer exist", 401));
+        return next(
+          new AppError("This user belonging to this token no longer exist", 401)
+        );
       }
 
       // Check user's active status
@@ -241,7 +263,9 @@ exports.protect = catchAsync(async (req, res, next) => {
 
       // Check if user changed password after token was issued
       if (changedPasswordAfter(decoded.iat, user)) {
-        return next(new AppError("Password changed recently, Login again", 401));
+        return next(
+          new AppError("Password changed recently, Login again", 401)
+        );
       }
 
       user.password = undefined;
@@ -251,13 +275,14 @@ exports.protect = catchAsync(async (req, res, next) => {
       next();
     }
   });
-
 });
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      return next(new AppError("You do not have permission to perform this action", 403));
+      return next(
+        new AppError("You do not have permission to perform this action", 403)
+      );
     }
 
     next();
@@ -268,7 +293,9 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   const { passwordCurrent, password, passwordConfirm } = req.body;
 
   // Get the current user
-  const user = (await db.query("SELECT * FROM users WHERE id = ?", req.user.id))[0][0];
+  const user = (
+    await db.query("SELECT * FROM users WHERE id = ?", req.user.id)
+  )[0][0];
 
   // Check if current password is correct
   if (!(await comparePassword(passwordCurrent, user))) {
@@ -277,12 +304,16 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
   // Check if password is equal to confirm password
   if (password !== passwordConfirm) {
-    return next(new AppError("Password and confirm password are not the same.", 400));
+    return next(
+      new AppError("Password and confirm password are not the same.", 400)
+    );
   }
 
   // Check if password is up to 8 characters
   if (!password || password.length < 8) {
-    return next(new AppError("Please enter a password with at least 8 characters", 400));
+    return next(
+      new AppError("Please enter a password with at least 8 characters", 400)
+    );
   }
 
   // Hash password
@@ -324,7 +355,11 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   const sql =
     "UPDATE users SET passwordResetToken = ?, passwordResetExpires = ? WHERE email = ? ";
 
-  await db.query(sql, [passwordResetToken, passwordResetExpires, req.body.email]);
+  await db.query(sql, [
+    passwordResetToken,
+    passwordResetExpires,
+    req.body.email,
+  ]);
 
   // TODO
   // Send token to user's email
@@ -347,7 +382,10 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
   // Get user based on token
-  const hashedToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
 
   // Get the user based on the token
   const sql =
@@ -364,12 +402,16 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   // Check if password is equal to confirm password
   if (password !== passwordConfirm) {
-    return next(new AppError("Password and confirm password are not the same.", 400));
+    return next(
+      new AppError("Password and confirm password are not the same.", 400)
+    );
   }
 
   // Check if password is up to 8 characters
   if (!password || password.length < 8) {
-    return next(new AppError("Please enter a password with at least 8 characters", 400));
+    return next(
+      new AppError("Please enter a password with at least 8 characters", 400)
+    );
   }
 
   // Hash password
