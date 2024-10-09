@@ -1,6 +1,7 @@
 const db = require("../config/db");
 const { use } = require("../routes/productRoute");
 const AppError = require("./appError");
+const fetch = require("node-fetch");
 let exchangeApi = process.env.EXCHANGE_GENERATION_API;
 
 exports.convertCategoriesToArray = (data) => {
@@ -41,95 +42,124 @@ exports.generateReferralCode = () => {
   return code;
 };
 
-exports.earnVoucher = async (user_id, amount, currency, next) => {
+exports.earnVoucher = async (user_id, amount, currencyCode, next) => {
   try {
-    const user = (
-      await db.query("SELECT * FROM users WHERE id = ?", [user_id])
-    )[0];
-    if (!user) return next(new AppError("User not found", 404));
+    // Fetch the user
+    const userResult = await db.query("SELECT * FROM users WHERE id = ?", [
+      user_id,
+    ]);
+    const user = userResult[0][0];
+    if (!user) throw new AppError("User not found", 404);
+
+    console.log("User:", user);
 
     if (user.referred_by != null) {
-      const referredBy = (
-        await db.query("SELECT * FROM users WHERE id = ?", [user.referred_by])
-      )[0];
-      if (!referredBy)
-        return next(new AppError("Referred user not found", 404));
-
-      const voucherFetcher = await fetch(
-        `https://v6.exchangerate-api.com/v6/${exchangeApi}/latest/${currency}`
+      // Fetch the referred user
+      const referredByResult = await db.query(
+        "SELECT * FROM users WHERE id = ?",
+        [user.referred_by]
       );
-      if (!voucherFetcher.ok)
-        return next(new AppError("Rate conversion failed", 400));
+      const referredBy = referredByResult[0][0];
+      console.log("Referred By:", referredBy);
+      if (!referredBy) throw new AppError("Referred user not found", 404);
+
+      // Fetch conversion rates
+      const voucherFetcher = await fetch(
+        `https://v6.exchangerate-api.com/v6/${exchangeApi}/latest/${currencyCode}`
+      );
+      if (!voucherFetcher.ok) throw new AppError("Rate conversion failed", 400);
 
       const response = await voucherFetcher.json();
       const conversionRates = response.conversion_rates;
       if (!conversionRates)
-        return next(new AppError("Conversion rates not found", 400));
+        throw new AppError("Conversion rates not found", 400);
 
-      // const referralPercentage = (
-      //   await db.query(
-      //     "SELECT percentage_rate FROM voucher_interest WHERE id=1"
-      //   )
-      // )[0];
-
-      // if (!referralPercentage)
-      //   return next(new AppError("Error retrieving referral percentage", 400));
-      // Step 5: Calculate the referral reward based on the purchase amount
-      // const reward = amount / referralPercentage.percentage_rate;
-
+      // Fetch referral percentage
       const referralPercentageResult = await db.query(
         "SELECT * FROM referral_rewards_percentage"
       );
-      if (!referralPercentageResult)
-        return next(new AppError("Error retrieving referral percentage", 400));
-      const referralPercentage = referralPercentageResult[0][0].percentage;
+      if (!referralPercentageResult || referralPercentageResult[0].length === 0)
+        throw new AppError("Referral percentage data not found", 400);
 
-      // Step 5: Calculate the referral reward based on the purchase amount
-      const reward = (referralPercentage / 100) * amount;
+      const referralPercentage =
+        referralPercentageResult[0][0].percentage_to_earn;
 
-      const userVoucher = (
-        await db.query("SELECT * FROM voucher WHERE user_id = ?", [
-          referredBy.id,
-        ])
-      )[0];
-      const voucherData = {
-        voucherCanada: conversionRates.CAD * reward,
-        voucherGhana: conversionRates.GHS * reward,
-        voucherNgn: conversionRates.NGN * reward,
-        voucherUs: conversionRates.USD * reward,
-        voucherUk: conversionRates.GBP * reward,
-        voucher: conversionRates.USD * reward,
-      };
+      // Calculate rewardAmount
+      const rewardAmount = (Number(referralPercentage) / 100) * Number(amount);
+      if (isNaN(rewardAmount))
+        throw new AppError("Failed to calculate reward amount", 400);
 
-      await db.beginTransaction();
+      console.log("Reward Amount:", rewardAmount);
 
+      // Begin Transaction
+      const connection = await db.getConnection();
       try {
+        await connection.beginTransaction();
+
+        // Check if the referred user already has a voucher
+        const userVoucherResult = await connection.query(
+          "SELECT * FROM voucher WHERE user_id = ?",
+          [referredBy.id]
+        );
+        const userVoucher = userVoucherResult[0][0];
+        console.log(userVoucher);
         if (userVoucher) {
-          await db.query("UPDATE voucher SET ? WHERE user_id = ?", [
-            {
-              voucherCanada:
-                Number(userVoucher.voucherCanada) + voucherData.voucherCanada,
-              voucherGhana:
-                Number(userVoucher.voucherGhana) + voucherData.voucherGhana,
-              voucherNgn:
-                Number(userVoucher.voucherNgn) + voucherData.voucherNgn,
-              voucherUs: Number(userVoucher.voucherUs) + voucherData.voucherUs,
-              voucherUk: Number(userVoucher.voucherUk) + voucherData.voucherUk,
-              voucher: Number(userVoucher.voucher) + voucherData.voucher,
-            },
+          let updateVoucherSql;
+          switch (currencyCode) {
+            case "NGN":
+              updateVoucherSql =
+                "UPDATE voucher SET voucherNgn = voucherNgn + ? WHERE user_id = ?";
+              break;
+            case "USD":
+              updateVoucherSql =
+                "UPDATE voucher SET voucherUs = voucherUs + ? WHERE user_id = ?";
+              break;
+            case "GBP":
+              updateVoucherSql =
+                "UPDATE voucher SET voucherUk = voucherUk + ? WHERE user_id = ?";
+              break;
+            case "GHS":
+              updateVoucherSql =
+                "UPDATE voucher SET voucherGhana = voucherGhana + ? WHERE user_id = ?";
+              break;
+            case "CAD":
+              updateVoucherSql =
+                "UPDATE voucher SET voucherCanada = voucherCanada + ? WHERE user_id = ?";
+              break;
+            default:
+              throw new AppError("Invalid currency code", 400);
+          }
+
+          // Update the voucher with the reward amount
+          const res = await connection.query(updateVoucherSql, [
+            rewardAmount,
             referredBy.id,
           ]);
+          console.log(res);
         } else {
-          await db.query("INSERT INTO voucher SET ?", {
+          // Insert a new voucher for the referred user
+          const insertData = {
             user_id: referredBy.id,
-            ...voucherData,
-          });
+            voucherNgn: currencyCode === "NGN" ? rewardAmount : 0,
+            voucherUs: currencyCode === "USD" ? rewardAmount : 0,
+            voucherUk: currencyCode === "GBP" ? rewardAmount : 0,
+            voucherGhana: currencyCode === "GHS" ? rewardAmount : 0,
+            voucherCanada: currencyCode === "CAD" ? rewardAmount : 0,
+            // Add other voucher fields as necessary
+          };
+
+          await connection.query("INSERT INTO voucher SET ?", insertData);
         }
 
-        await db.commit();
+        // Commit Transaction
+        await connection.commit();
       } catch (error) {
-        await db.rollback();
+        // Rollback Transaction on Error
+        await connection.rollback();
         throw error;
+      } finally {
+        // Release the connection back to the pool
+        connection.release();
       }
     }
   } catch (error) {

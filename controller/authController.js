@@ -110,22 +110,6 @@ exports.signUp = catchAsync(async (req, res, next) => {
   //   Hash password
   const hashedPassword = await bcrypt.hash(password, 12);
 
-  // Generate unique refferal code
-  let genReferralCode;
-  genReferralCode = generateReferralCode();
-
-  // Check of referral code is already used
-  const isReferralCode = (
-    await db.query(
-      "SELECT referralCode FROM users WHERE referralCode = ?",
-      genReferralCode
-    )
-  )[0][0];
-
-  if (isReferralCode) {
-    genReferralCode = generateReferralCode();
-  }
-
   // if referralCode is provided get referrers id
   let referrersId;
 
@@ -136,6 +120,34 @@ exports.signUp = catchAsync(async (req, res, next) => {
         referralCode
       )
     )[0][0]?.id;
+  }
+
+  // Generate unique discount code
+  let genReferralCode;
+  let isUnique = false;
+
+  while (!isUnique) {
+    genReferralCode = generateReferralCode();
+
+    const codeCheck = await db.query(
+      "SELECT * FROM users WHERE referralCode = ?",
+      [genReferralCode]
+    );
+    if (codeCheck[0].length === 0) {
+      isUnique = true;
+    }
+  }
+
+  // Check of discount code is already used
+  const isReferralCode = (
+    await db.query(
+      "SELECT referralCode FROM users WHERE referralCode = ?",
+      genReferralCode
+    )
+  )[0][0];
+
+  if (isReferralCode) {
+    genReferralCode = generateReferralCode();
   }
 
   // Insert new user
@@ -154,7 +166,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
     password: hashedPassword,
   };
 
-  const data = role === "admin" ? dataAdmin : dataCustomer;
+  const data = dataCustomer;
   const sql = "INSERT INTO users SET ?";
 
   const newUserId = (await db.query(sql, data))[0].insertId;

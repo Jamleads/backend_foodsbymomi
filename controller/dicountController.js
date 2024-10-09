@@ -67,6 +67,24 @@ exports.redeemDiscount = async (code) => {
   return _code[0][0];
 };
 
+exports.getDiscountCode = catchAsync(async (req, res, next) => {
+  if (!req.params.discount_code)
+    throw new AppError("Discount code is required", 404);
+  const _codeResult = await db.query(
+    "SELECT * FROM discount_code WHERE code = ?",
+    [req.params.discount_code] // Ensure this is passed as an array
+  );
+  const _code = _codeResult[0][0];
+  if (_code) {
+    return res
+      .status(200)
+      .json({ status: "success", data: { discount: _code } });
+  }
+  return res
+    .status(404)
+    .json({ status: "success", message: "Discount code not found" });
+});
+
 exports.updateRedeemPercentage = catchAsync(async (discount_code) => {
   const _codeResult = await db.query(
     "SELECT * FROM discount_code WHERE code = ?",
@@ -127,7 +145,7 @@ exports.createOrUpdateReferralReward = catchAsync(async (req, res, next) => {
   if (result[0].length > 0) {
     // Row exists, so update it
     await db.query(
-      "UPDATE referral_rewards_percentage SET percentage = ? WHERE id = ?",
+      "UPDATE referral_rewards_percentage SET percentage_to_earn = ? WHERE id = ?",
       [percentage_to_earn, result[0][0].id]
     );
     res.status(200).json({

@@ -26,8 +26,6 @@ module.exports = class Email {
     return nodemailer.createTransport({
       pool: true,
       secure: true,
-      logger: true, // Enable logging
-      debug: true, // Enable debug output
       host: process.env.TEST_EMAIL_HOST,
       port: process.env.TEST_EMAIL_PORT,
       auth: {

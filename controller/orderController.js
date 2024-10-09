@@ -11,6 +11,7 @@ const {
   calculateAmount,
   updateRedeemPercentage,
 } = require("./dicountController");
+const fetch = require("node-fetch");
 let exchangeApi = process.env.EXCHANGE_GENERATION_API;
 
 const flw = new Flutterwave(
@@ -156,15 +157,14 @@ exports.createOrder = catchAsync(async (req, res, next) => {
           response.data.id,
         ])
       )[0][0];
-
       if (thePay) return next(new AppError("Invalid or used payment ID", 400)); // TODO: Make sure you uncomment this comment.
 
       // ======= SAVE TO DATABASE ======= //
     } catch (error) {
       return next(new AppError(error.message || error, 400));
     }
-
     await clearCartFn(req, next);
+
     const newTotal = discount
       ? calculateAmount(response.data.amount, discount.percentage_discounted)
       : response.data.amount;
@@ -253,8 +253,6 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       if (code === "EUR") return priceEur;
     };
 
-    await clearCartFn(req, next);
-
     const order_id = (
       await db.query("INSERT INTO orders SET ?", {
         user_id: req.user.id,
@@ -268,7 +266,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     )[0].insertId;
 
     // console.log(order_id)
-
+    await clearCartFn(req, next);
     // create order items
     for (let i = 0; i < cart.length; i++) {
       const {
@@ -317,7 +315,6 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     if (discount_code) {
       await updateRedeemPercentage(discount_code);
     }
-
     await new Email({ email: req.user.email }).sendOrderCreateSuccessfully(
       newTotal
     );
