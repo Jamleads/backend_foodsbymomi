@@ -71,7 +71,7 @@ exports.getDiscountCode = catchAsync(async (req, res, next) => {
   if (!req.params.discount_code)
     throw new AppError("Discount code is required", 404);
   const _codeResult = await db.query(
-    "SELECT * FROM discount_code WHERE code = ?",
+    "SELECT * FROM discount_code WHERE code = ? AND status = 'Ongoing'",
     [req.params.discount_code] // Ensure this is passed as an array
   );
   const _code = _codeResult[0][0];
@@ -82,7 +82,54 @@ exports.getDiscountCode = catchAsync(async (req, res, next) => {
   }
   return res
     .status(404)
-    .json({ status: "success", message: "Discount code not found" });
+    .json({ status: "success", message: "Discount code not found or redeem" });
+});
+
+exports.updateDiscount = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  if (!id) throw new AppError("Id is required");
+  const { percentage_discounted, number_of_times_to_be_use } = req.body;
+  const _codeResult = await db.query(
+    "SELECT * FROM discount_code WHERE id = ?  AND status = 'Ongoing'",
+    [id] // Ensure this is passed as an array
+  );
+  console.log(_codeResult);
+  const _code = _codeResult[0][0];
+  if (_code) {
+    // Access the first row of the result set
+
+    // Create an object to store fields to update
+    const filteredBody = {
+      status: _code.status,
+      number_of_times_used: number_of_times_to_be_use,
+      percentage_discounted: percentage_discounted,
+    };
+
+    // Update the discount code in the database
+    const sql = "UPDATE discount_code SET ? WHERE id = ?";
+    await db.query(sql, [filteredBody, id]);
+
+    return res
+      .status(200)
+      .json({ status: "success", message: "Discount updated successfully." });
+  } else {
+    return res.status(404).json({
+      status: "success",
+      message: "Discount code not found or redeem completely",
+    });
+  }
+});
+
+exports.deleteDiscount = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  if (!id) throw new AppError("Id is required");
+
+  const sql = "DELETE FROM discount_code WHERE id = ?";
+  await db.query(sql, id);
+
+  return res
+    .status(200)
+    .json({ status: "success", message: "Discount delete successfully." });
 });
 
 exports.updateRedeemPercentage = catchAsync(async (discount_code) => {

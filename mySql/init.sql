@@ -30,6 +30,7 @@ CREATE TABLE waitlists (
 CREATE TABLE voucher (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    voucherPoint DECIMAL(10, 6) NOT NULL DEFAULT "0.00",
     voucherNgn DECIMAL(10, 6) NOT NULL DEFAULT "0.00",
     voucherUs DECIMAL(10, 6) NOT NULL DEFAULT "0.00", 
     voucherUk DECIMAL(10, 6) NOT NULL DEFAULT "0.00",

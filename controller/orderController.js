@@ -57,6 +57,20 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     discount = await redeemDiscount(discount_code);
     console.log(discount);
   }
+  let voucherValue = {
+    NGN: 100,
+    USD: 0.3,
+    GBP: 0.6,
+    GHS: 1.5,
+    CAD: 0.3,
+  };
+  let voucherPoint = 0;
+  const userVoucher = (
+    await db.query("SELECT * FROM voucher WHERE user_id = ?", req.user.id)
+  )[0][0];
+  if (userVoucher) {
+    voucherPoint = userVoucher.voucherPoint;
+  }
   if (voucher) {
     const { currency, amount } = voucher;
     if (!amount) return next(new AppError("Please enter voucher amount", 400));
@@ -66,46 +80,50 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       return next(new AppError("Invalid currency code", 400));
 
     // Fetch the user's voucher balances
+    let voucherPoint = 0;
     const userVoucher = (
       await db.query("SELECT * FROM voucher WHERE user_id = ?", req.user.id)
     )[0][0];
-    if (!userVoucher)
-      return next(
-        new AppError("Sorry! this user does not have any voucher", 400)
-      );
+
+    // if (!userVoucher)
+    //   return next(
+    //     new AppError("Sorry! this user does not have any voucher", 400)
+    //   );
 
     // Determine which voucher the user is trying to use (currency specific)
-    let voucherToBeUsed;
-    switch (currency) {
-      case "NGN":
-        voucherToBeUsed = "voucherNgn";
-        break;
-      case "GHS":
-        voucherToBeUsed = "voucherGhana";
-        break;
-      case "GBP":
-        voucherToBeUsed = "voucherUk";
-        break;
-      case "USD":
-        voucherToBeUsed = "voucherUs";
-        break;
-      case "CAD":
-        voucherToBeUsed = "voucherCanada";
-        break;
-      default:
-        return next(new AppError("Invalid currency", 400));
-    }
+    // let voucherToBeUsed;
+    // switch (currency) {
+    //   case "NGN":
+    //     voucherToBeUsed = "voucherNgn";
+    //     break;
+    //   case "GHS":
+    //     voucherToBeUsed = "voucherGhana";
+    //     break;
+    //   case "GBP":
+    //     voucherToBeUsed = "voucherUk";
+    //     break;
+    //   case "USD":
+    //     voucherToBeUsed = "voucherUs";
+    //     break;
+    //   case "CAD":
+    //     voucherToBeUsed = "voucherCanada";
+    //     break;
+    //   default:
+    //     return next(new AppError("Invalid currency", 400));
+    // }
 
-    // Check if user has enough voucher in the chosen currency
-    if (userVoucher[voucherToBeUsed] < amount) {
-      return next(new AppError("Not enough voucher", 400));
-    }
+    // // Check if user has enough voucher in the chosen currency
+    // if (userVoucher[voucherToBeUsed] < amount) {
+    //   return next(new AppError("Not enough voucher", 400));
+    // }
 
     // Calculate the percentage of voucher being used
-    const percentageUsed = amount / userVoucher[voucherToBeUsed];
+    // const percentageUsed = amount / userVoucher[voucherToBeUsed];
 
     // Deduct the same percentage from all currencies
     const updatedVoucherBalances = {
+      voucherPoint:
+        userVoucher.voucherPoint - userVoucher.voucherNgn * percentageUsed,
       voucherNgn:
         userVoucher.voucherNgn - userVoucher.voucherNgn * percentageUsed,
       voucherGhana:
@@ -165,9 +183,11 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     }
     await clearCartFn(req, next);
 
-    const newTotal = discount
-      ? calculateAmount(response.data.amount, discount.percentage_discounted)
-      : response.data.amount;
+    const newTotal =
+      (discount
+        ? calculateAmount(response.data.amount, discount.percentage_discounted)
+        : response.data.amount) -
+      voucherValue[response.data.currency.toUpperCase()] * voucherPoint;
     // create order
     const order_id = (
       await db.query("INSERT INTO orders SET ?", {
@@ -235,7 +255,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     }
     const newTotal = discount
       ? calculateAmount(total, discount.percentage_discounted)
-      : total;
+      : total - voucherValue[currency.toUpperCase()] * voucherPoint;
     const getPrice = (
       code,
       priceNgn,

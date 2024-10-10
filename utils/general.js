@@ -64,15 +64,15 @@ exports.earnVoucher = async (user_id, amount, currencyCode, next) => {
       if (!referredBy) throw new AppError("Referred user not found", 404);
 
       // Fetch conversion rates
-      const voucherFetcher = await fetch(
-        `https://v6.exchangerate-api.com/v6/${exchangeApi}/latest/${currencyCode}`
-      );
-      if (!voucherFetcher.ok) throw new AppError("Rate conversion failed", 400);
+      // const voucherFetcher = await fetch(
+      //   `https://v6.exchangerate-api.com/v6/${exchangeApi}/latest/${currencyCode}`
+      // );
+      // if (!voucherFetcher.ok) throw new AppError("Rate conversion failed", 400);
 
-      const response = await voucherFetcher.json();
-      const conversionRates = response.conversion_rates;
-      if (!conversionRates)
-        throw new AppError("Conversion rates not found", 400);
+      // const response = await voucherFetcher.json();
+      // const conversionRates = response.conversion_rates;
+      // if (!conversionRates)
+      //   throw new AppError("Conversion rates not found", 400);
 
       // Fetch referral percentage
       const referralPercentageResult = await db.query(
@@ -131,15 +131,20 @@ exports.earnVoucher = async (user_id, amount, currencyCode, next) => {
           }
 
           // Update the voucher with the reward amount
-          const res = await connection.query(updateVoucherSql, [
-            rewardAmount,
-            referredBy.id,
-          ]);
+          // const res = await connection.query(updateVoucherSql, [
+          //   rewardAmount,
+          //   referredBy.id,
+          // ]);
+          const res = await connection.query(
+            "UPDATE voucher SET voucherPoint = voucherPoint + ? WHERE user_id = ?",
+            [rewardAmount, referredBy.id]
+          );
           console.log(res);
         } else {
           // Insert a new voucher for the referred user
           const insertData = {
             user_id: referredBy.id,
+            voucherPoint: 0,
             voucherNgn: currencyCode === "NGN" ? rewardAmount : 0,
             voucherUs: currencyCode === "USD" ? rewardAmount : 0,
             voucherUk: currencyCode === "GBP" ? rewardAmount : 0,

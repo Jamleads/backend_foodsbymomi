@@ -11,6 +11,10 @@ router.route("/").get(discountController.getAllDiscountCodes);
 router.route("/create").post(discountController.createDiscountCode);
 
 router
+  .route("/:id")
+  .delete(discountController.deleteDiscount)
+  .patch(discountController.updateDiscount);
+router
   .route("/set-referral-rewards-percentage")
   .post(discountController.createOrUpdateReferralReward);
 router
